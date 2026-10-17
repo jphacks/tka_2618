@@ -16,6 +16,9 @@ export const colors = {
   primary: '#212121',
   onPrimary: '#FFFFFF',
 
+  // カメラの映像の枠（仮）
+  cameraPreview: '#333333',
+
   // 画像を読み込むまでの仮の色
   imagePlaceholder: '#D9D9D9',
   // 写真の上に文字を載せるときの暗い影

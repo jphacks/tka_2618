@@ -37,9 +37,7 @@ export function ReservationsScreen() {
             key={reservation.id}
             reservation={reservation}
             country={findCountry(reservation.countryCode)}
-            onPressPhoto={() => {
-              // TODO: ③で「写真を撮影」画面につなぎます
-            }}
+            onPressPhoto={item => router.push(`/camera?reservationId=${item.id}`)}
             onPressDelete={setDeleting}
           />
         ))}

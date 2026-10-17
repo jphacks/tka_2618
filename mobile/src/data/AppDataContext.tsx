@@ -7,14 +7,20 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getHomeData, getReservations } from './api';
-import type { Reservation, VisitedShop } from './types';
+import type { CountryCode, Reservation, VisitedShop } from './types';
 
 type AppData = {
   reservations: Reservation[];
   visitedShops: VisitedShop[];
+  // 食べた（記録した）国の国コード。地図を塗るのに使います
+  visitedCountryCodes: Set<CountryCode>;
+  // 設定画面の「予約時間に通知する」
+  notificationsEnabled: boolean;
   addReservation: (reservation: Omit<Reservation, 'id'>) => void;
   removeReservation: (id: string) => void;
   addVisitedShop: (shop: Omit<VisitedShop, 'id'>) => void;
+  resetVisitedShops: () => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
 };
 
 const AppDataContext = createContext<AppData | null>(null);
@@ -27,6 +33,7 @@ function newId(prefix: string) {
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [visitedShops, setVisitedShops] = useState<VisitedShop[]>([]);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // 最初のデータを読み込みます（今はダミーデータ）
   useEffect(() => {
@@ -57,9 +64,26 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setVisitedShops(current => [{ ...shop, id: newId('v') }, ...current]);
   }, []);
 
+  const resetVisitedShops = useCallback(() => setVisitedShops([]), []);
+
+  const visitedCountryCodes = useMemo(
+    () => new Set(visitedShops.map(shop => shop.countryCode)),
+    [visitedShops],
+  );
+
   const value = useMemo(
-    () => ({ reservations, visitedShops, addReservation, removeReservation, addVisitedShop }),
-    [reservations, visitedShops, addReservation, removeReservation, addVisitedShop],
+    () => ({
+      reservations,
+      visitedShops,
+      visitedCountryCodes,
+      notificationsEnabled,
+      addReservation,
+      removeReservation,
+      addVisitedShop,
+      resetVisitedShops,
+      setNotificationsEnabled,
+    }),
+    [reservations, visitedShops, visitedCountryCodes, notificationsEnabled, addReservation, removeReservation, addVisitedShop, resetVisitedShops],
   );
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
