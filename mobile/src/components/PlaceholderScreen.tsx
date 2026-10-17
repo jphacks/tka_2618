@@ -33,11 +33,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   title: {
-    ...fonts.heading,
+    ...fonts.sectionTitle,
     color: colors.text,
   },
   note: {
     ...fonts.body,
-    color: colors.tabInactive,
+    color: colors.textSecondary,
   },
 });

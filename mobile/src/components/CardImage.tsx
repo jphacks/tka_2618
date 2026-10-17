@@ -1,4 +1,4 @@
-// カードの画像部分です。画像のURLがあれば画像を、なければ灰色の仮表示を出します。
+// カードの画像部分です。画像のURLがあれば写真を、なければ（読み込み中も）薄い色を出します。
 
 import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { colors } from '../constants/theme';
@@ -18,6 +18,7 @@ export function CardImage({ imageUrl, style }: Props) {
 
 const styles = StyleSheet.create({
   placeholder: {
-    backgroundColor: colors.cardImage,
+    backgroundColor: colors.imagePlaceholder,
+    overflow: 'hidden',
   },
 });

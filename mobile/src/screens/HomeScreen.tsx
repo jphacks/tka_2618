@@ -13,7 +13,8 @@ import { colors, spacing } from '../constants/theme';
 import { findCountry, getHomeData } from '../data/api';
 import type { HomeData } from '../data/types';
 
-const GRID_GAP = 18;
+// 2列のカードの間のすき間
+const GRID_GAP = spacing.md;
 
 export function HomeScreen() {
   const { width } = useWindowDimensions();
@@ -47,7 +48,7 @@ export function HomeScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <FeaturedBanner title="おすすめの国特集" items={data.featured} />
 
-      <View style={styles.sectionHeader}>
+      <View style={styles.firstSectionHeader}>
         <SectionHeader
           title="国名から選ぶ"
           onPressMore={() => {
@@ -64,7 +65,7 @@ export function HomeScreen() {
         renderItem={({ item }) => <CountryCard country={item} />}
       />
 
-      <View style={[styles.sectionHeader, styles.visitedHeader]}>
+      <View style={styles.sectionHeader}>
         <SectionHeader title="今まで訪れたお店" />
       </View>
       <View style={styles.shopGrid}>
@@ -87,25 +88,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  // 余白はすべて8の倍数（theme.ts の spacing）です
+  firstSectionHeader: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
   },
   sectionHeader: {
-    marginTop: 13,
-    marginBottom: 16,
-  },
-  visitedHeader: {
-    marginTop: 21,
-    marginBottom: 21,
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
   },
   countryList: {
     paddingHorizontal: spacing.screen,
-    gap: 14,
+    gap: spacing.md,
   },
   shopGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: spacing.screen,
     columnGap: GRID_GAP,
-    rowGap: 17,
+    rowGap: spacing.lg,
   },
 });

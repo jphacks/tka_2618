@@ -52,8 +52,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     alignItems: 'center',
-    paddingTop: 7,
-    gap: 7,
+    justifyContent: 'center',
   },
   label: {
     ...fonts.tabLabel,

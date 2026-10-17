@@ -1,7 +1,7 @@
 // セクションの見出しです。onPressMore を渡すと、右側に矢印ボタンが出ます。
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, radius } from '../constants/theme';
+import { colors, fonts, radius, spacing } from '../constants/theme';
 import { ArrowForwardIcon } from './Icons';
 
 type Props = {
@@ -19,11 +19,11 @@ export function SectionHeader({ title, onPressMore }: Props) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${title}をすべて見る`}
-          hitSlop={12}
+          hitSlop={spacing.sm}
           onPress={onPressMore}
           style={({ pressed }) => [styles.moreButton, pressed && styles.pressed]}
         >
-          <ArrowForwardIcon color={colors.textOnDark} />
+          <ArrowForwardIcon color={colors.iconButtonIcon} size={16} />
         </Pressable>
       )}
     </View>
@@ -35,23 +35,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingLeft: 33,
-    paddingRight: 19,
-    minHeight: 22,
+    paddingHorizontal: spacing.screen,
+    minHeight: 32,
   },
   title: {
-    ...fonts.heading,
+    ...fonts.sectionTitle,
     color: colors.text,
   },
   moreButton: {
-    width: 22,
-    height: 22,
+    width: 32,
+    height: 32,
     borderRadius: radius.full,
-    backgroundColor: colors.iconButton,
+    backgroundColor: colors.iconButtonBackground,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
 });

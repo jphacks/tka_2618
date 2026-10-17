@@ -13,7 +13,6 @@ export type FeaturedCountry = {
   countryId: string;
   title: string;
   description: string;
-  backgroundColor: string; // 画像が入るまでの仮の背景色
   imageUrl?: string;
 };
 

@@ -1,7 +1,8 @@
-// 「今まで訪れたお店」に並ぶ、お店のカードです。左上に国旗と国名を表示します。
+// 「今まで訪れたお店」に並ぶ、お店のカードです。
+// 写真の左上に国旗と国名、写真の下にお店の名前と訪れた日を表示します。
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, radius } from '../constants/theme';
+import { colors, fonts, radius, spacing } from '../constants/theme';
 import type { Country, VisitedShop } from '../data/types';
 import { CardImage } from './CardImage';
 
@@ -12,59 +13,68 @@ type Props = {
   onPress?: (shop: VisitedShop) => void;
 };
 
+// '2026-10-01' → '2026年10月1日'
+function formatDate(date: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  return `${year}年${month}月${day}日`;
+}
+
 export function VisitedShopCard({ shop, country, width, onPress }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${country?.name ?? ''} ${shop.name}`}
       onPress={() => onPress?.(shop)}
-      style={({ pressed }) => [styles.card, { width }, pressed && styles.pressed]}
+      style={({ pressed }) => [{ width }, pressed && styles.pressed]}
     >
-      <CardImage imageUrl={shop.imageUrl} style={styles.image} />
-      {country && (
-        <Text style={styles.country} numberOfLines={1}>
-          {country.flag}
-          {country.name}
-        </Text>
-      )}
-      <View style={styles.footer}>
-        <Text style={styles.shopName} numberOfLines={1}>
-          {shop.name}
-        </Text>
+      <View>
+        <CardImage imageUrl={shop.imageUrl} style={styles.image} />
+        {country && (
+          // 写真の上でも読めるよう、白い下地のラベルにしています
+          <View style={styles.chip}>
+            <Text style={styles.chipText} numberOfLines={1}>
+              {country.flag} {country.name}
+            </Text>
+          </View>
+        )}
       </View>
+      <Text style={styles.shopName} numberOfLines={1}>
+        {shop.name}
+      </Text>
+      <Text style={styles.visitedAt}>{formatDate(shop.visitedAt)}に訪問</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    // Figma のカード（164 × 135）と同じ縦横比にします
-    aspectRatio: 164 / 135,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.cardFooter,
-  },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.8,
   },
   image: {
-    flex: 1,
+    aspectRatio: 1,
+    borderRadius: radius.md,
   },
-  country: {
-    ...fonts.heading,
-    color: colors.text,
+  chip: {
     position: 'absolute',
-    top: 13,
-    left: 17,
-    right: 17,
+    top: spacing.sm,
+    left: spacing.sm,
+    maxWidth: '85%',
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.chipBackground,
   },
-  footer: {
-    height: 33,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+  chipText: {
+    ...fonts.label,
+    lineHeight: 24,
+    color: colors.text,
   },
   shopName: {
-    ...fonts.caption,
+    ...fonts.bodyBold,
     color: colors.text,
+    marginTop: spacing.sm,
+  },
+  visitedAt: {
+    ...fonts.caption,
+    color: colors.textSecondary,
   },
 });
