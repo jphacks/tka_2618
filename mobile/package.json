@@ -1,0 +1,42 @@
+{
+  "name": "jphack-mobile",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@expo/metro-runtime": "~57.0.17",
+    "expo": "^57.0.30",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-web": "^0.21.4"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.4",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web --port 8000",
+    "typecheck": "tsc --noEmit",
+    "lint": "expo lint",
+    "postinstall": "node scripts/security-patches.cjs",
+    "security:check": "node scripts/security-patches.cjs --check",
+    "test:security": "npm run security:check && node --test tests/security.test.cjs",
+    "prestart": "npm run security:check",
+    "preandroid": "npm run security:check",
+    "preios": "npm run security:check",
+    "preweb": "npm run security:check"
+  },
+  "private": true,
+  "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    }
+  }
+}
