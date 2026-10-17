@@ -1,18 +1,26 @@
-// 画面がデータを受け取る「窓口」です。
-// 今はダミーデータを返しています。APIができたら、この関数の中身だけを
-// fetch に書き換えれば、画面側のコードは変えずにすみます。
-//
-// 書き換えの例:
-//   const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/home`);
-//   return (await response.json()) as HomeData;
+// ホーム画面がデータを受け取る「窓口」です。
+// 国一覧はバックエンドを正として取得し、APIがまだない特集と訪問履歴は
+// 表示確認用のデータを使用します。
 
-import { dummyCountries, dummyFeatured, dummyVisitedShops } from './dummy';
+import { dummyFeatured, dummyVisitedShops } from './dummy';
+import { searchApi, type SearchCountry } from './searchApi';
 import type { Country, HomeData } from './types';
 
-export async function getHomeData(): Promise<HomeData> {
+type CountryListResponse = {
+  countries: SearchCountry[];
+};
+
+export async function getHomeData(signal: AbortSignal): Promise<HomeData> {
+  const response = await searchApi<CountryListResponse>('/api/countries', signal);
   return {
     featured: dummyFeatured,
-    countries: dummyCountries,
+    countries: response.countries
+      .filter(country => country.cuisine_supported)
+      .map(country => ({
+        id: country.code.toLowerCase(),
+        name: country.name_ja,
+        flag: country.flag,
+      })),
     visitedShops: dummyVisitedShops,
   };
 }
