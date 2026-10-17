@@ -1,24 +1,14 @@
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import type { MapShape } from '../data/mapShapes';
+import { calculateStampMapSize, type StampMapProps } from './StampMap.types';
 
-type Props = {
-  shapes: MapShape[];
-  viewBox: string;
-  visitCounts: ReadonlyMap<string, number>;
-  selectedCode: string | null;
-  onSelect: (shape: MapShape) => void;
-};
-
-export function StampMap({ shapes, viewBox, visitCounts, selectedCode, onSelect }: Props) {
+export function StampMap({ shapes, viewBox, visitCounts, selectedCode, onSelect }: StampMapProps) {
   const { width } = useWindowDimensions();
-  const mapWidth = Math.min(width - 48, 752);
-  const values = viewBox.split(' ').map(Number);
-  const aspectRatio = values.length === 4 && values[3] > 0 ? values[2] / values[3] : 1.5;
+  const mapSize = calculateStampMapSize(width, viewBox);
 
   return (
-    <View style={[styles.frame, { width: mapWidth, height: mapWidth / aspectRatio }]}>
+    <View style={[styles.frame, mapSize]}>
       <Svg accessibilityLabel="訪問した地域を塗ったスタンプ地図" width="100%" height="100%" viewBox={viewBox}>
         {shapes.map(shape => {
           const visited = (visitCounts.get(shape.code) ?? 0) > 0;
