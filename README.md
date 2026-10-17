@@ -14,8 +14,7 @@
 ### 今後の展望
 ### 注力したこと（こだわり等）
 * 
-* 
-
+* ddddddddddd
 ## 開発技術
 ### 活用した技術
 #### API・データ
@@ -118,7 +117,8 @@ backend/
   tests/test_api.py    # API テスト
   requirements.txt    # Python の依存パッケージ
 mobile/
-  App.tsx              # React Nativeの画面
+  src/app/             # Expo Routerのタブ・画面ルート
+  src/screens/         # ホーム・地図（店舗検索）の画面
   app.json             # Expoの設定
   package.json         # モバイルアプリの依存関係
 compose.yaml           # 開発用 Docker Compose
@@ -333,7 +333,9 @@ npm run lint
 npx expo export --platform ios --platform android --platform web
 ```
 
-- `mobile/App.tsx`: モバイル画面とAPI接続処理
+- `mobile/src/app/`: ホーム・地図・予約・設定のタブルーティング
+- `mobile/src/screens/MapScreen.tsx`: 国選択・現在地検索・店舗一覧
+- `mobile/src/components/ApiStatus.tsx`: 設定タブのAPI接続確認
 - `mobile/app.json`: アプリ名・プラットフォーム設定
 - `mobile/.env.example`: API接続先の設定例
 
