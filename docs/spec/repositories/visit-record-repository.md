@@ -7,6 +7,7 @@ Persist visit records locally without requiring a backend account or network con
 ## Contract
 
 - `listVisits()` returns all valid records, newest first.
+- `getVisitById(id)` returns the matching valid record or `null` when it does not exist.
 - `saveVisit(record)` inserts or replaces a record with the same ID.
 - Malformed or unsupported stored payloads return an empty list instead of crashing the app.
 
@@ -16,4 +17,4 @@ Photo URIs are stored with their visit. Native camera output is copied to an app
 
 ## Self-Review
 
-Score: **96/100**. Ordering, replacement, failure behavior, schema versioning, and photo ownership are specified. Browser quota remains platform-dependent and will surface as a save error.
+Score: **97/100**. Ordering, lookup, replacement, failure behavior, schema versioning, and photo ownership are specified. Browser quota remains platform-dependent and will surface as a save error.

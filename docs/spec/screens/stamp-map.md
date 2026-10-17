@@ -22,7 +22,7 @@ The world view is initially selected. Switching views does not navigate or disca
 - Japan map regions use the same prefecture codes returned by the backend.
 - Unvisited fill is white, visited fill is black, and borders are grey.
 - The selected region keeps its fill and receives a gold border.
-- Pressing a region displays its name, verified visit count, and up to three matching restaurant visits.
+- Pressing a region displays its name, verified visit count, and up to three matching restaurant visits. Pressing one of those visits opens `/visits/<visit ID>`.
 - Selecting a region only displays stamp progress and matching visit history. It never starts restaurant search.
 - The map must scale to the available width without horizontal scrolling.
 

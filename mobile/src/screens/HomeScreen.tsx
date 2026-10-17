@@ -138,6 +138,7 @@ export function HomeScreen() {
             shop={shop}
             country={findCountry(data.countries, shop.countryId)}
             width={shopCardWidth}
+            onPress={selectedShop => router.navigate({ pathname: '/visits/[id]', params: { id: selectedShop.id } })}
           />
         ))}
       </View>

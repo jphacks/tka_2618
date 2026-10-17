@@ -71,6 +71,7 @@ Use Expo Router's existing absolute routes.
 | Japan card (`JP`) | `/search/prefectures` |
 | Any other supported country card | `/search/results?country=<uppercase ISO code>` |
 | `今まで訪れたお店` arrow | `/map` |
+| Visited-shop card | `/visits/<visit ID>` |
 
 Use the existing `SectionHeader` and `CountryCard` callback props. Do not duplicate either component or restaurant-search logic.
 

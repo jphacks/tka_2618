@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -117,9 +117,16 @@ export function StampMapScreen() {
                 <Text style={styles.selectedName}>{selectedName}</Text>
                 <Text style={styles.selectedCount}>{selectedVisits.length}回の訪問</Text>
                 {selectedVisits.slice(0, 3).map(visit => (
-                  <View key={visit.id} style={styles.visitRow}>
+                  <Pressable
+                    key={visit.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${visit.shopName}の訪問記録を見る`}
+                    onPress={() => router.push({ pathname: '/visits/[id]', params: { id: visit.id } })}
+                    style={({ pressed }) => [styles.visitRow, pressed && styles.pressed]}
+                  >
                     <View style={styles.visitText}><Text style={styles.visitName}>{visit.shopName}</Text><Text style={styles.visitDate}>{new Date(visit.visitedAt).toLocaleDateString('ja-JP')}</Text></View>
-                  </View>
+                    <Text style={styles.visitArrow}>›</Text>
+                  </Pressable>
                 ))}
               </View>
             )}
@@ -169,6 +176,8 @@ const styles = StyleSheet.create({
   visitText: { flex: 1, gap: 2 },
   visitName: { color: colors.text, fontSize: 14, fontWeight: '600' },
   visitDate: { color: '#746d5c', fontSize: 12 },
+  visitArrow: { color: '#746d5c', fontSize: 22 },
+  pressed: { opacity: 0.65 },
   empty: { color: '#66736f', textAlign: 'center', paddingVertical: spacing.lg },
   list: { gap: spacing.sm },
   heading: { color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 4 },

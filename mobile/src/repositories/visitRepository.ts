@@ -39,6 +39,11 @@ export async function listVisits(): Promise<VisitRecord[]> {
   }
 }
 
+export async function getVisitById(id: string): Promise<VisitRecord | null> {
+  const visits = await listVisits();
+  return visits.find(visit => visit.id === id) ?? null;
+}
+
 async function writeVisits(records: VisitRecord[]) {
   const payload: StoredVisitPayload = { version: SCHEMA_VERSION, records };
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
