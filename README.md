@@ -38,7 +38,67 @@
 ## ローカル開発環境
 
 Python 3.13 / FastAPI と React / TypeScript / Vite を Docker Compose で起動します。
-Docker Desktop（または Docker Engine + Compose v2）を起動しておいてください。
+Docker を使う場合、PC に Python や Node.js を個別にインストールする必要はありません。
+
+### Docker のインストール
+
+#### macOS
+
+1. [Docker Desktop for Mac の公式ページ](https://docs.docker.com/desktop/setup/install/mac-install/)からインストーラーをダウンロードします。「この Mac について」でチップを確認し、Apple Silicon（M シリーズ）または Intel に合ったものを選んでください。
+2. ダウンロードした `Docker.dmg` を開き、Docker を Applications フォルダにドラッグします。
+3. アプリケーションから Docker を起動し、画面の案内に従って初期設定を完了します。
+4. Docker Desktop のエンジンが起動するまで待ちます。Docker Compose も同時にインストールされます。
+
+#### Windows（WSL 2）
+
+1. [Docker Desktop for Windows の公式ページ](https://docs.docker.com/desktop/setup/install/windows-install/)で対応 OS とシステム要件を確認します。
+2. WSL が未導入の場合は、管理者として開いた PowerShell で次を実行し、案内に従って PC を再起動します。
+
+   ```powershell
+   wsl --install
+   ```
+
+3. PowerShell で `wsl --update` を実行して WSL を更新します。
+4. 公式ページから PC のアーキテクチャに合った Docker Desktop をダウンロードし、インストーラーを実行します。バックエンドを選択する画面では WSL 2 を選びます。
+5. Docker Desktop を起動して初期設定を完了し、エンジンの起動を待ちます。このプロジェクトでは Linux コンテナを使用します。
+
+WSL 内のターミナルから開発する場合は、Docker Desktop の Settings → Resources → WSL Integration で使用するディストリビューションとの連携を有効にしてください。Docker Compose は Docker Desktop に含まれています。
+
+#### Linux（Ubuntu など）
+
+[Docker Engine の公式インストール手順](https://docs.docker.com/engine/install/)から使用するディストリビューションを選び、Docker Engine と Compose プラグインをインストールします。
+
+Ubuntu の場合は、[Ubuntu 向け手順](https://docs.docker.com/engine/install/ubuntu/)の「Install using the apt repository」に従って公式リポジトリを登録した後、次を実行します。
+
+```bash
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl start docker
+sudo docker run --rm hello-world
+```
+
+Docker の操作で権限エラーになる場合は、この README の `docker` コマンドに `sudo` を付けて実行してください。
+
+#### インストール後の確認
+
+macOS / Windows は Docker Desktop を起動した状態で、新しく開いたターミナル（Windows は PowerShell または連携済みの WSL）から確認します。
+
+```bash
+docker --version
+docker compose version
+docker info
+docker run --rm hello-world
+```
+
+バージョンが表示され、最後のコマンドで `Hello from Docker!` と表示されれば準備完了です。初回は確認用イメージをダウンロードするため、インターネット接続が必要です。
+
+- `docker` が見つからない場合: インストールが完了していることを確認し、ターミナルを開き直してください。
+- `Cannot connect to the Docker daemon` と表示される場合: Docker Desktop または Linux の Docker サービスを起動してください。
+- `docker compose` が見つからない場合: Docker Desktop のインストール状態、または Linux の `docker-compose-plugin` を確認してください。
+
+### アプリケーションの起動
+
+Docker Desktop（または Linux の Docker サービス）を起動してから実行します。
 
 ```bash
 cd tka_2618
