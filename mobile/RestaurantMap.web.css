@@ -1,0 +1,41 @@
+.restaurant-map-frame {
+  border: 1px solid #dce5df;
+  border-radius: 14px;
+  height: 420px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.restaurant-map {
+  height: 100%;
+  width: 100%;
+}
+
+.current-location-marker span {
+  background: #2878d0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+  display: block;
+  height: 14px;
+  width: 14px;
+}
+
+.restaurant-location-marker span {
+  align-items: center;
+  background: #d94b35;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  display: flex;
+  font-size: 10px;
+  height: 22px;
+  justify-content: center;
+  transform: rotate(-45deg);
+  width: 22px;
+}
+
+.restaurant-location-marker span::first-letter {
+  transform: rotate(45deg);
+}

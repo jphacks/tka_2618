@@ -235,7 +235,8 @@ curl --get 'http://localhost:8001/api/restaurants/nearby' \
 ## アプリ（React Native / Expo）
 
 `mobile/` の同じコードからiOS・Android・Web版を起動できます。
-国を選択し、端末の現在地から3km以内にある対応料理の店舗を距離順で表示します。
+国を選択し、端末の現在地から3km以内にある対応料理の店舗を地図と距離順の一覧で表示します。
+Web版の地図にはOpenStreetMap、iOS・Android版には端末のネイティブ地図を使用します。
 ホットペッパーのAPIキーは引き続きバックエンドだけで管理します。
 
 ### スマートフォンで起動

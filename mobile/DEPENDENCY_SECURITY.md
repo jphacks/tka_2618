@@ -9,8 +9,10 @@
 - `node-forge@1.4.0`: RSA PKCS#1 v1.5検証時、DigestAlgorithm内の要素数を厳密に検証。
 
 後者2つは公式修正版が未公開のため、プロジェクトで管理するローカル修正です。
-`npm audit`はパッケージのバージョンから判定するため、修正適用後も15件のhigh警告が残ります。
+`npm audit`はパッケージのバージョンから判定するため、修正適用後も16件のhigh警告が残ります。
 これは2つのアドバイザリが依存先のExpo関連パッケージにも波及して数えられたものです。
+地図表示で追加した `react-native-maps` の1件も、新しいアドバイザリではなく、既に計上されている
+React Nativeの依存関係が影響先としてもう1件表示されたものです。
 監査を無効化したり、バージョンを偽装して警告を消したりはしていません。
 
 `npm audit fix --force` は実行しないでください。Expo 57からExpo 44への破壊的な
@@ -79,7 +81,7 @@ RSAテストはテスト用の鍵で不正なDigestInfoを署名し、公開RSA�
 npm run test:security
 npm run typecheck
 npm run lint
-npx expo export --platform ios --platform android
+npx expo export --platform ios --platform android --platform web
 npm audit
 ```
 

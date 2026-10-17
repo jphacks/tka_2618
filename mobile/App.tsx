@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import RestaurantMap from './RestaurantMap';
+
 type Country = {
   code: string;
   name_ja: string;
@@ -26,6 +28,8 @@ type Restaurant = {
   name: string;
   distance_m: number;
   address: string | null;
+  lat: number;
+  lng: number;
   genre: string | null;
   image_url: string | null;
   detail_url: string | null;
@@ -47,6 +51,7 @@ export default function App() {
   const [searchState, setSearchState] = useState<SearchState>('idle');
   const [searchMessage, setSearchMessage] = useState('');
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [searchCenter, setSearchCenter] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -82,6 +87,7 @@ export default function App() {
   async function searchNearby() {
     if (!apiUrl || !selectedCountry) return;
     setRestaurants([]);
+    setSearchCenter(null);
     setSearchMessage('');
     setSearchState('locating');
 
@@ -94,6 +100,10 @@ export default function App() {
       }
 
       const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setSearchCenter({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
       setSearchState('searching');
       const query = [
         `country_code=${encodeURIComponent(selectedCountry)}`,
@@ -153,6 +163,7 @@ export default function App() {
                       onPress={() => {
                         setSelectedCountry(country.code);
                         setRestaurants([]);
+                        setSearchCenter(null);
                         setSearchState('idle');
                       }}
                       style={({ pressed }) => [styles.countryButton, active && styles.countryButtonActive, pressed && styles.pressed]}
@@ -177,6 +188,13 @@ export default function App() {
               {searchState === 'error' && <Text style={styles.error}>{searchMessage}</Text>}
               {searchState === 'success' && restaurants.length === 0 && (
                 <Text style={styles.empty}>3km以内に該当するお店が見つかりませんでした。</Text>
+              )}
+
+              {searchState === 'success' && searchCenter && (
+                <View style={styles.mapSection}>
+                  <Text accessibilityRole="header" style={styles.sectionTitle}>地図</Text>
+                  <RestaurantMap center={searchCenter} restaurants={restaurants} />
+                </View>
               )}
 
               {restaurants.length > 0 && (
@@ -243,6 +261,7 @@ const styles = StyleSheet.create({
   error: { color: '#b33030', fontSize: 15, lineHeight: 23, marginTop: 12 },
   empty: { color: '#52645f', backgroundColor: '#fff', borderRadius: 12, padding: 18, marginTop: 20 },
   results: { marginTop: 4 },
+  mapSection: { marginTop: 4 },
   restaurantCard: { backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: '#dce5df' },
   restaurantImage: { width: '100%', height: 180, backgroundColor: '#e4e9e6' },
   restaurantBody: { padding: 16 },
