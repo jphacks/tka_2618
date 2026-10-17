@@ -16,11 +16,19 @@ type AppData = {
   visitedCountryCodes: Set<CountryCode>;
   // 設定画面の「予約時間に通知する」
   notificationsEnabled: boolean;
+  pendingVisitPhoto: PendingVisitPhoto | null;
   addReservation: (reservation: Omit<Reservation, 'id'>) => void;
   removeReservation: (id: string) => void;
   addVisitedShop: (shop: Omit<VisitedShop, 'id'>) => void;
   resetVisitedShops: () => void;
   setNotificationsEnabled: (enabled: boolean) => void;
+  setPendingVisitPhoto: (photo: PendingVisitPhoto) => void;
+  clearPendingVisitPhoto: () => void;
+};
+
+type PendingVisitPhoto = {
+  reservationId: string;
+  uri: string;
 };
 
 const AppDataContext = createContext<AppData | null>(null);
@@ -34,6 +42,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [visitedShops, setVisitedShops] = useState<VisitedShop[]>([]);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [pendingVisitPhoto, setPendingVisitPhoto] = useState<PendingVisitPhoto | null>(null);
 
   // 最初のデータを読み込みます（今はダミーデータ）
   useEffect(() => {
@@ -65,6 +74,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetVisitedShops = useCallback(() => setVisitedShops([]), []);
+  const clearPendingVisitPhoto = useCallback(() => setPendingVisitPhoto(null), []);
 
   const visitedCountryCodes = useMemo(
     () => new Set(visitedShops.map(shop => shop.countryCode)),
@@ -77,13 +87,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       visitedShops,
       visitedCountryCodes,
       notificationsEnabled,
+      pendingVisitPhoto,
       addReservation,
       removeReservation,
       addVisitedShop,
       resetVisitedShops,
       setNotificationsEnabled,
+      setPendingVisitPhoto,
+      clearPendingVisitPhoto,
     }),
-    [reservations, visitedShops, visitedCountryCodes, notificationsEnabled, addReservation, removeReservation, addVisitedShop, resetVisitedShops],
+    [
+      reservations,
+      visitedShops,
+      visitedCountryCodes,
+      notificationsEnabled,
+      pendingVisitPhoto,
+      addReservation,
+      removeReservation,
+      addVisitedShop,
+      resetVisitedShops,
+      clearPendingVisitPhoto,
+    ],
   );
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

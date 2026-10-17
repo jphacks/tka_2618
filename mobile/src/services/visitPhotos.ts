@@ -22,12 +22,14 @@ async function persistNativePhoto(uri: string) {
 }
 
 export async function captureVisitPhoto(): Promise<PhotoCaptureResult> {
-  const permission = await ImagePicker.requestCameraPermissionsAsync();
-  if (!permission.granted) {
-    return { status: 'error', message: '写真を撮るにはカメラの使用を許可してください。' };
-  }
-
   try {
+    if (Platform.OS !== 'web') {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        return { status: 'error', message: '写真を撮るにはカメラの使用を許可してください。' };
+      }
+    }
+
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
       allowsEditing: false,

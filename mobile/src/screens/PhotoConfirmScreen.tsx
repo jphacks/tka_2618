@@ -1,6 +1,3 @@
-// 撮影した画像を確認する画面です（Figma の「画像を確認」）。
-// メモを書いて「記録する」を押すと「今まで訪れたお店」に追加され、地図タブに移動します。
-
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -10,30 +7,33 @@ import { FormField, TextField } from '../components/FormField';
 import { Header } from '../components/Header';
 import { colors, fonts, radius, spacing } from '../constants/theme';
 import { useAppData } from '../data/AppDataContext';
-import { findCountry } from '../data/api';
 import { todayString } from '../utils/date';
 
 export function PhotoConfirmScreen() {
   const { reservationId } = useLocalSearchParams<{ reservationId: string }>();
-  const { reservations, addVisitedShop } = useAppData();
+  const { reservations, addVisitedShop, pendingVisitPhoto, clearPendingVisitPhoto } = useAppData();
   const [memo, setMemo] = useState('');
 
   const reservation = reservations.find(item => item.id === reservationId);
-  // 仮実装：撮った写真の代わりに、予約したお店（なければその国）の料理写真を使います
-  const photoUrl = reservation?.imageUrl ?? findCountry(reservation?.countryCode)?.imageUrl;
+  const photoUri = pendingVisitPhoto?.reservationId === reservationId ? pendingVisitPhoto.uri : undefined;
+
+  const retake = () => {
+    if (!reservation) return;
+    clearPendingVisitPhoto();
+    router.replace({ pathname: '/camera', params: { reservationId: reservation.id } });
+  };
 
   const record = () => {
-    if (!reservation) return;
+    if (!reservation || !photoUri) return;
     addVisitedShop({
       name: reservation.shopName,
       countryCode: reservation.countryCode,
       visitedAt: todayString(),
-      imageUrl: photoUrl,
+      imageUrl: photoUri,
       memo: memo.trim() || undefined,
     });
-    // この画面を閉じてから、地図タブに移動します
-    router.back();
-    router.navigate('/map');
+    clearPendingVisitPhoto();
+    router.replace('/map');
   };
 
   return (
@@ -41,14 +41,16 @@ export function PhotoConfirmScreen() {
       <Header title="画像を確認" showBack />
       {!reservation ? (
         <Text style={styles.notFound}>予約が見つかりませんでした</Text>
+      ) : !photoUri ? (
+        <View style={styles.missingPhoto}>
+          <Text style={styles.notFound}>撮影した写真が見つかりませんでした</Text>
+          <Button title="写真を撮り直す" variant="secondary" onPress={retake} />
+        </View>
       ) : (
         <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <FormField label="画像">
-              <View>
-                <CardImage imageUrl={photoUrl} style={styles.photo} />
-                <Text style={styles.photoNote}>仮の写真（カメラは未実装）</Text>
-              </View>
+              <CardImage imageUrl={photoUri} style={styles.photo} />
             </FormField>
             <FormField label="メモ">
               <TextField
@@ -62,6 +64,7 @@ export function PhotoConfirmScreen() {
             </FormField>
           </ScrollView>
           <View style={styles.footer}>
+            <Button title="写真を撮り直す" variant="secondary" onPress={retake} />
             <Button title="記録する" onPress={record} />
           </View>
         </KeyboardAvoidingView>
@@ -84,6 +87,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xl,
   },
+  missingPhoto: {
+    padding: spacing.screen,
+    gap: spacing.lg,
+  },
   content: {
     padding: spacing.screen,
     gap: spacing.lg,
@@ -92,20 +99,9 @@ const styles = StyleSheet.create({
     height: 264,
     borderRadius: radius.lg,
   },
-  photoNote: {
-    ...fonts.caption,
-    color: colors.textOnImage,
-    position: 'absolute',
-    left: spacing.md,
-    bottom: spacing.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-    backgroundColor: colors.scrim,
-    overflow: 'hidden',
-  },
   footer: {
     padding: spacing.screen,
     paddingTop: spacing.sm,
+    gap: spacing.sm,
   },
 });
