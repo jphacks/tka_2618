@@ -1,7 +1,8 @@
+// バックエンド（API）につながるかを確認する部品です。
+// 以前の App.tsx にあった接続確認を、そのまま部品にしました。設定画面で使っています。
+
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type Connection =
   | { status: 'loading' }
@@ -16,7 +17,7 @@ const initialConnection: Connection = apiUrl && /^https?:\/\//.test(apiUrl)
   ? { status: 'loading' }
   : { status: 'error', message: 'mobile/.envにAPIのURL（モバイルはEXPO_PUBLIC_API_URL、WebはEXPO_PUBLIC_WEB_API_URL）を設定し、アプリを再読み込みしてください。' };
 
-export default function App() {
+export function ApiStatus() {
   const [connection, setConnection] = useState<Connection>(initialConnection);
   const [attempt, setAttempt] = useState(0);
 
@@ -51,46 +52,30 @@ export default function App() {
 
   const loading = connection.status === 'loading';
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="dark" />
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.eyebrow}>JPHACK / MOBILE</Text>
-          <Text accessibilityRole="header" style={styles.title}>開発をはじめよう。</Text>
-          <Text style={styles.intro}>React Native + TypeScript と Python の開発環境です。</Text>
-          <View style={styles.card}>
-            <Text accessibilityRole="header" style={styles.heading}>バックエンド接続</Text>
-            {loading && <ActivityIndicator color="#215a49" style={styles.spinner} />}
-            <Text accessibilityLiveRegion="polite" style={[styles.message, connection.status === 'error' ? styles.error : styles.success]}>
-              {loading ? '接続を確認しています…' : connection.message}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: loading }}
-              disabled={loading}
-              onPress={() => {
-                setConnection(initialConnection);
-                setAttempt(value => value + 1);
-              }}
-              style={({ pressed }) => [styles.button, (loading || pressed) && styles.dimmed]}
-            >
-              <Text style={styles.buttonText}>再接続</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.hint}>ファイルを編集すると、変更が自動で反映されます。</Text>
-        </ScrollView>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <View style={styles.card}>
+      <Text accessibilityRole="header" style={styles.heading}>バックエンド接続</Text>
+      {loading && <ActivityIndicator color="#215a49" style={styles.spinner} />}
+      <Text accessibilityLiveRegion="polite" style={[styles.message, connection.status === 'error' ? styles.error : styles.success]}>
+        {loading ? '接続を確認しています…' : connection.message}
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: loading }}
+        disabled={loading}
+        onPress={() => {
+          setConnection(initialConnection);
+          setAttempt(value => value + 1);
+        }}
+        style={({ pressed }) => [styles.button, (loading || pressed) && styles.dimmed]}
+      >
+        <Text style={styles.buttonText}>再接続</Text>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f4f7f3' },
-  content: { flexGrow: 1, width: '100%', maxWidth: 800, alignSelf: 'center', padding: 24, paddingTop: 48 },
-  eyebrow: { color: '#487468', letterSpacing: 2, fontSize: 12, fontWeight: '700' },
-  title: { color: '#19312c', fontSize: 34, fontWeight: '700', marginVertical: 20 },
-  intro: { color: '#52645f', fontSize: 16, lineHeight: 27 },
-  card: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#dce5df', borderRadius: 16, padding: 24, marginTop: 36, marginBottom: 24 },
+  card: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#dce5df', borderRadius: 16, padding: 24 },
   heading: { color: '#19312c', fontSize: 16, fontWeight: '700', marginBottom: 16 },
   spinner: { alignSelf: 'flex-start', marginBottom: 12 },
   message: { fontSize: 16, lineHeight: 27, marginBottom: 20 },
@@ -99,5 +84,4 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#215a49', minHeight: 48, borderRadius: 8, padding: 12, alignItems: 'center', justifyContent: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   dimmed: { opacity: 0.5 },
-  hint: { color: '#52645f', fontSize: 14, lineHeight: 24 },
 });
