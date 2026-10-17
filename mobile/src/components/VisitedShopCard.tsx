@@ -1,9 +1,12 @@
-// 「今まで訪れたお店」に並ぶ、お店のカードです。左上に国旗と国名を表示します。
+// 「今まで訪れたお店」のカードです（Figma の「訪れたお店カード」）。
+// 写真の左上に国バッジ、写真の下にお店の名前と訪れた日を表示します。
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, radius } from '../constants/theme';
+import { colors, fonts, radius, spacing } from '../constants/theme';
 import type { Country, VisitedShop } from '../data/types';
+import { formatDate } from '../utils/date';
 import { CardImage } from './CardImage';
+import { CountryBadge } from './CountryBadge';
 
 type Props = {
   shop: VisitedShop;
@@ -18,53 +21,46 @@ export function VisitedShopCard({ shop, country, width, onPress }: Props) {
       accessibilityRole="button"
       accessibilityLabel={`${country?.name ?? ''} ${shop.name}`}
       onPress={() => onPress?.(shop)}
-      style={({ pressed }) => [styles.card, { width }, pressed && styles.pressed]}
+      style={({ pressed }) => [{ width }, pressed && styles.pressed]}
     >
-      <CardImage imageUrl={shop.imageUrl} style={styles.image} />
-      {country && (
-        <Text style={styles.country} numberOfLines={1}>
-          {country.flag}
-          {country.name}
-        </Text>
-      )}
-      <View style={styles.footer}>
-        <Text style={styles.shopName} numberOfLines={1}>
-          {shop.name}
-        </Text>
+      <View>
+        <CardImage imageUrl={shop.imageUrl} style={styles.image} />
+        {country && (
+          <View style={styles.badge}>
+            <CountryBadge country={country} />
+          </View>
+        )}
       </View>
+      <Text style={styles.shopName} numberOfLines={1}>
+        {shop.name}
+      </Text>
+      <Text style={styles.visitedAt}>{formatDate(shop.visitedAt)}に訪問</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    // Figma のカード（164 × 135）と同じ縦横比にします
-    aspectRatio: 164 / 135,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.cardFooter,
-  },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.8,
   },
   image: {
-    flex: 1,
+    // Figma のカード（164 × 112）と同じ縦横比
+    aspectRatio: 164 / 112,
+    borderRadius: radius.lg,
   },
-  country: {
-    ...fonts.heading,
-    color: colors.text,
+  badge: {
     position: 'absolute',
-    top: 13,
-    left: 17,
-    right: 17,
-  },
-  footer: {
-    height: 33,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+    top: spacing.sm,
+    left: spacing.sm,
+    right: spacing.sm,
   },
   shopName: {
-    ...fonts.caption,
+    ...fonts.bodyBold,
     color: colors.text,
+    marginTop: spacing.sm,
+  },
+  visitedAt: {
+    ...fonts.caption,
+    color: colors.textSecondary,
   },
 });

@@ -2,22 +2,28 @@
 // 上から「おすすめの国特集」「国名から選ぶ」「今まで訪れたお店」の順に並びます。
 
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { FlatList, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { CountryCard } from '../components/CountryCard';
 import { FeaturedBanner } from '../components/FeaturedBanner';
 import { SectionHeader } from '../components/SectionHeader';
 import { VisitedShopCard } from '../components/VisitedShopCard';
-import { colors, spacing } from '../constants/theme';
+import { colors, fonts, spacing } from '../constants/theme';
+import { useAppData } from '../data/AppDataContext';
 import { findCountry, getHomeData } from '../data/api';
 import type { HomeData } from '../data/types';
 
-const GRID_GAP = 18;
+// 2列のカードの間のすき間
+const GRID_GAP = spacing.md;
+// 横スクロールの国カードの幅
+const COUNTRY_CARD_WIDTH = 136;
 
 export function HomeScreen() {
   const { width } = useWindowDimensions();
   const [data, setData] = useState<HomeData | null>(null);
+  // 今まで訪れたお店は、写真を記録すると増えるので共有データから読みます
+  const { visitedShops } = useAppData();
 
   // データを読み込みます（今はダミーデータ。src/data/api.ts を参照）
   useEffect(() => {
@@ -47,32 +53,35 @@ export function HomeScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <FeaturedBanner title="おすすめの国特集" items={data.featured} />
 
-      <View style={styles.sectionHeader}>
+      <View style={styles.firstSectionHeader}>
         <SectionHeader
           title="国名から選ぶ"
-          onPressMore={() => {
-            // TODO: 「国名から選ぶ」画面ができたら、ここで移動します
-          }}
+          onPressMore={() => router.push('/countries')}
         />
       </View>
       <FlatList
         data={data.countries}
-        keyExtractor={country => country.id}
+        keyExtractor={country => country.code}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.countryList}
-        renderItem={({ item }) => <CountryCard country={item} />}
+        renderItem={({ item }) => (
+          <CountryCard country={item} width={COUNTRY_CARD_WIDTH} onPress={country => router.push(`/shops/${country.code}`)} />
+        )}
       />
 
-      <View style={[styles.sectionHeader, styles.visitedHeader]}>
+      <View style={styles.sectionHeader}>
         <SectionHeader title="今まで訪れたお店" />
       </View>
       <View style={styles.shopGrid}>
-        {data.visitedShops.map(shop => (
+        {visitedShops.length === 0 && (
+          <Text style={styles.empty}>まだ記録はありません。予約したお店で写真を撮ると、ここに並びます。</Text>
+        )}
+        {visitedShops.map(shop => (
           <VisitedShopCard
             key={shop.id}
             shop={shop}
-            country={findCountry(data.countries, shop.countryId)}
+            country={findCountry(shop.countryCode)}
             width={shopCardWidth}
           />
         ))}
@@ -87,25 +96,32 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  // 余白はすべて8の倍数（theme.ts の spacing）です
+  firstSectionHeader: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.screen,
   },
   sectionHeader: {
-    marginTop: 13,
-    marginBottom: 16,
-  },
-  visitedHeader: {
-    marginTop: 21,
-    marginBottom: 21,
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.screen,
   },
   countryList: {
     paddingHorizontal: spacing.screen,
-    gap: 14,
+    gap: spacing.md,
+  },
+  empty: {
+    ...fonts.body,
+    color: colors.textSecondary,
   },
   shopGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: spacing.screen,
     columnGap: GRID_GAP,
-    rowGap: 17,
+    rowGap: spacing.lg,
   },
 });
