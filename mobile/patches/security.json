@@ -1,0 +1,83 @@
+[
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/parse.js",
+    "before": "e572166565f15fa6ad9865ae49d678218e32aabfd1b3720f6d0d43d39800d310",
+    "after": "2c21b962b6de738c11f6d251a13c26fe7850b3673101d50896f339ba56dd27cd",
+    "replacements": [
+      {
+        "old": "    if (value === CHAR_LEFT_PARENTHESES) {\n",
+        "new": "    if (value === CHAR_LEFT_PARENTHESES) {\n      if (stack.length >= 100) {\n        throw new SyntaxError('braces nesting exceeds security limit (100)');\n      }\n"
+      },
+      {
+        "old": "    if (value === CHAR_LEFT_CURLY_BRACE) {\n",
+        "new": "    if (value === CHAR_LEFT_CURLY_BRACE) {\n      if (stack.length >= 100) {\n        throw new SyntaxError('braces nesting exceeds security limit (100)');\n      }\n"
+      }
+    ]
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/compile.js",
+    "before": "dc98f22eee3d511785d92a00758d5f0d48efed5f5813bdecc2de430c529b5c9f",
+    "after": "45f10d1908b86cac7e3bcb2d59de10020ca0355ab68b5e7bd2a39e71e02d86df",
+    "replacements": [
+      {
+        "old": "  const walk = (node, parent = {}) => {",
+        "new": "  const walk = (node, parent = {}, depth = 0) => {\n    if (depth >= 100) {\n      throw new SyntaxError('braces nesting exceeds security limit (100)');\n    }"
+      },
+      {
+        "old": "output += walk(child, node);",
+        "new": "output += walk(child, node, depth + 1);"
+      }
+    ]
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/expand.js",
+    "before": "41ccc196ebfa7b7781a634e721eb744e4e7bcb54cba427a7e3d6806a1b9e58f7",
+    "after": "6b2e501af3218bc7563e9ea4cfa59ed7b54ca5940547a060d6dbe83b9df84d3d",
+    "replacements": [
+      {
+        "old": "  const walk = (node, parent = {}) => {",
+        "new": "  const walk = (node, parent = {}, depth = 0) => {\n    if (depth >= 100) {\n      throw new SyntaxError('braces nesting exceeds security limit (100)');\n    }"
+      },
+      {
+        "old": "walk(child, node);",
+        "new": "walk(child, node, depth + 1);"
+      }
+    ]
+  },
+  {
+    "package": "braces",
+    "version": "3.0.3",
+    "file": "lib/stringify.js",
+    "before": "379f22d77bfa1478341ccd49c5e4267464aabcbba03558bab332aac23fc6f23a",
+    "after": "acde877d1ad781c8aa7b484f6148bf7c3fdd0d6ac1f07401c286e81a7a3baa8e",
+    "replacements": [
+      {
+        "old": "  const stringify = (node, parent = {}) => {",
+        "new": "  const stringify = (node, parent = {}, depth = 0) => {\n    if (depth >= 100) {\n      throw new SyntaxError('braces nesting exceeds security limit (100)');\n    }"
+      },
+      {
+        "old": "output += stringify(child);",
+        "new": "output += stringify(child, {}, depth + 1);"
+      }
+    ]
+  },
+  {
+    "package": "node-forge",
+    "version": "1.4.0",
+    "file": "lib/rsa.js",
+    "before": "fd4740238145ec26470eb3f06a627c72039538ce1307dbdce40521f94dfd0a50",
+    "after": "c9b1e3799e230528b6d6815c1f6cd3c6058b9d45975264b55d995abb976589af",
+    "replacements": [
+      {
+        "old": "            obj.value.length !== 2) {",
+        "new": "            obj.value.length !== 2 ||\n            obj.value[0].value.length !==\n              (('parameters' in capture) ? 2 : 1)) {"
+      }
+    ]
+  }
+]
