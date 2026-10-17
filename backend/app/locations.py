@@ -7,6 +7,8 @@ import pycountry
 from fastapi import APIRouter, HTTPException, Path as ApiPath
 from pydantic import BaseModel, Field
 
+from app.cuisines import CUISINES_BY_COUNTRY
+
 router = APIRouter(prefix="/api", tags=["locations"])
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -18,6 +20,7 @@ class Country(BaseModel):
     flag: str
     supported: bool
     has_regions: bool
+    cuisine_supported: bool
 
 
 class CountryListResponse(BaseModel):
@@ -85,6 +88,7 @@ def _build_country_catalog() -> CountryListResponse:
                 flag=getattr(source, "flag", _flag_emoji(code)),
                 supported=bool(overrides.get("supported", False)),
                 has_regions=bool(overrides.get("has_regions", False)),
+                cuisine_supported=code in CUISINES_BY_COUNTRY,
             )
         )
 

@@ -1,0 +1,14 @@
+[
+  { "country_code": "JP", "name_ja": "日本料理", "search_keyword": "和食" },
+  { "country_code": "KR", "name_ja": "韓国料理", "search_keyword": "韓国料理" },
+  { "country_code": "CN", "name_ja": "中国料理", "search_keyword": "中華" },
+  { "country_code": "TH", "name_ja": "タイ料理", "search_keyword": "タイ料理" },
+  { "country_code": "VN", "name_ja": "ベトナム料理", "search_keyword": "ベトナム料理" },
+  { "country_code": "IN", "name_ja": "インド料理", "search_keyword": "インド料理" },
+  { "country_code": "IT", "name_ja": "イタリア料理", "search_keyword": "イタリアン" },
+  { "country_code": "FR", "name_ja": "フランス料理", "search_keyword": "フレンチ" },
+  { "country_code": "ES", "name_ja": "スペイン料理", "search_keyword": "スペイン料理" },
+  { "country_code": "MX", "name_ja": "メキシコ料理", "search_keyword": "メキシコ料理" },
+  { "country_code": "TR", "name_ja": "トルコ料理", "search_keyword": "トルコ料理" },
+  { "country_code": "US", "name_ja": "アメリカ料理", "search_keyword": "アメリカ料理" }
+]

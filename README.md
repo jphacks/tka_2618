@@ -215,11 +215,27 @@ curl http://localhost:8001/api/countries/JP/regions
 
 国一覧は国連加盟193か国を日本語名・英語名・ISO 3166国コード・国旗付きで返します。
 `supported` は現在サービスを提供できるか、`has_regions` は地域一覧を取得できるかを表します。現在の対応国は日本です。
+`cuisine_supported` が `true` の国は、現在地周辺の料理検索に対応しています。
+
+### 現在地周辺の料理検索
+
+対応する国の料理を、指定した緯度・経度から3km以内で検索します。ホットペッパーAPIの `range=5` を使用し、返された店舗を実距離で再確認して距離順に返します。
+
+```bash
+curl --get 'http://localhost:8001/api/restaurants/nearby' \
+  --data 'country_code=IT' \
+  --data 'lat=35.6812' \
+  --data 'lng=139.7671' \
+  --data 'count=30'
+```
+
+現在は日本、韓国、中国、タイ、ベトナム、インド、イタリア、フランス、スペイン、メキシコ、トルコ、アメリカの料理検索に対応しています。
+利用にはリポジトリ直下の `.env` に `HOTPEPPER_API_KEY` の設定が必要です。
 
 ## アプリ（React Native / Expo）
 
 `mobile/` の同じコードからiOS・Android・Web版を起動できます。
-バックエンド接続確認・再接続画面を備え、Python APIを使用します。
+国を選択し、端末の現在地から3km以内にある対応料理の店舗を距離順で表示します。
 ホットペッパーのAPIキーは引き続きバックエンドだけで管理します。
 
 ### スマートフォンで起動

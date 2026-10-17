@@ -20,6 +20,7 @@ def test_list_countries():
         "flag": "🇯🇵",
         "supported": True,
         "has_regions": True,
+        "cuisine_supported": True,
     }
     assert {"KR", "US", "FR", "BR", "AU"}.issubset(
         {country["code"] for country in payload["countries"]}
@@ -28,6 +29,7 @@ def test_list_countries():
         {country["code"] for country in payload["countries"]}
     )
     assert [country["code"] for country in payload["countries"] if country["supported"]] == ["JP"]
+    assert len([country for country in payload["countries"] if country["cuisine_supported"]]) == 12
 
 
 def test_list_japanese_prefectures():

@@ -27,7 +27,13 @@
       "web"
     ],
     "plugins": [
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "現在地から3km以内の飲食店を検索するために位置情報を使用します。"
+        }
+      ]
     ]
   }
 }
