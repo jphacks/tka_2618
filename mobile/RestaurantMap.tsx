@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { RestaurantMapProps } from './RestaurantMap.types';
 
-export default function RestaurantMap({ center, restaurants }: RestaurantMapProps) {
+export default function RestaurantMap({ center, restaurants, selectedId, onSelect }: RestaurantMapProps) {
   return (
     <View style={styles.frame}>
       <MapView
@@ -27,6 +27,8 @@ export default function RestaurantMap({ center, restaurants }: RestaurantMapProp
             coordinate={{ latitude: restaurant.lat, longitude: restaurant.lng }}
             description={`${restaurant.distance_m.toLocaleString()}m`}
             key={restaurant.id}
+            onPress={() => onSelect?.(restaurant)}
+            pinColor={restaurant.id === selectedId ? '#212121' : '#d94b35'}
             title={restaurant.name}
           />
         ))}

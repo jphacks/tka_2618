@@ -13,4 +13,6 @@ export type RestaurantMapProps = {
     longitude: number;
   };
   restaurants: MapRestaurant[];
+  selectedId?: string | null;
+  onSelect?: (restaurant: MapRestaurant) => void;
 };

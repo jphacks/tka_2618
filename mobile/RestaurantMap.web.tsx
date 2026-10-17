@@ -19,7 +19,14 @@ const restaurantIcon = divIcon({
   iconSize: [26, 26],
 });
 
-export default function RestaurantMap({ center, restaurants }: RestaurantMapProps) {
+const selectedRestaurantIcon = divIcon({
+  className: 'selected-restaurant-location-marker',
+  html: '<span aria-hidden="true">●</span>',
+  iconAnchor: [15, 30],
+  iconSize: [30, 30],
+});
+
+export default function RestaurantMap({ center, restaurants, selectedId, onSelect }: RestaurantMapProps) {
   const centerPoint: [number, number] = [center.latitude, center.longitude];
   const points: [number, number][] = [
     centerPoint,
@@ -48,7 +55,12 @@ export default function RestaurantMap({ center, restaurants }: RestaurantMapProp
           <Popup>現在地</Popup>
         </Marker>
         {restaurants.map(restaurant => (
-          <Marker icon={restaurantIcon} key={restaurant.id} position={[restaurant.lat, restaurant.lng]}>
+          <Marker
+            eventHandlers={{ click: () => onSelect?.(restaurant) }}
+            icon={restaurant.id === selectedId ? selectedRestaurantIcon : restaurantIcon}
+            key={restaurant.id}
+            position={[restaurant.lat, restaurant.lng]}
+          >
             <Popup>
               <strong>{restaurant.name}</strong>
               <br />

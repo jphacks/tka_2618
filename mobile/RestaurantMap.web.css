@@ -39,3 +39,18 @@
 .restaurant-location-marker span::first-letter {
   transform: rotate(45deg);
 }
+
+.selected-restaurant-location-marker span {
+  align-items: center;
+  background: #212121;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  color: #fff;
+  display: flex;
+  font-size: 11px;
+  height: 26px;
+  justify-content: center;
+  transform: rotate(-45deg);
+  width: 26px;
+}
