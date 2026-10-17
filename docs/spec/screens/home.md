@@ -33,6 +33,8 @@ The request must:
 - Ignore completion after the component unmounts or a newer attempt replaces it.
 - Never read local `.env` files. The existing API client may use environment variables already loaded by the runtime.
 
+Start the API request and cached-country read together. Display a valid cached catalog as soon as it is available. A successful response replaces the cache and displayed countries. If the API fails after cached countries are displayed, keep the home content interactive and show `保存済みの一覧を表示しています。`. Show the blocking error state only when neither source provides a valid catalog.
+
 Load visit records from the local visit repository at the same time as the country request. Map each record to a visited-shop card using its first photo, cuisine-origin country code, restaurant name, visit date, and verification mode. Repository failure must not prevent the country catalog from loading.
 
 ## Screen States
@@ -59,6 +61,8 @@ Keep the existing visual order:
 3. `国名から選ぶ` section header
 4. Horizontal country-card list
 5. `今まで訪れたお店` section populated newest first from local visit records
+
+When cached countries remain because refresh failed, display `保存済みの一覧を表示しています。` between the nearby-search action and the country section header.
 
 ## Navigation
 

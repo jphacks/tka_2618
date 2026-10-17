@@ -10,7 +10,7 @@ import { FeaturedBanner } from '../components/FeaturedBanner';
 import { SectionHeader } from '../components/SectionHeader';
 import { VisitedShopCard } from '../components/VisitedShopCard';
 import { colors, fonts, radius, spacing } from '../constants/theme';
-import { findCountry, getHomeData } from '../data/api';
+import { findCountry, getCachedHomeData, getFreshHomeData } from '../data/api';
 import type { Country, HomeData } from '../data/types';
 
 const GRID_GAP = 18;
@@ -18,7 +18,7 @@ const HOME_LOAD_TIMEOUT_MS = 15_000;
 
 type HomeState =
   | { status: 'loading' }
-  | { status: 'ready'; data: HomeData }
+  | { status: 'ready'; data: HomeData; usingCache: boolean }
   | { status: 'error' };
 
 export function HomeScreen() {
@@ -33,13 +33,19 @@ export function HomeScreen() {
     let active = true;
 
     async function load() {
-      try {
-        const data = await getHomeData(controller.signal);
-        if (active) setState({ status: 'ready', data });
-      } catch {
-        if (active) setState({ status: 'error' });
-      } finally {
-        clearTimeout(timeout);
+      const freshResultPromise = getFreshHomeData(controller.signal)
+        .then(data => ({ ok: true, data } as const))
+        .catch(() => ({ ok: false } as const));
+      const cachedData = await getCachedHomeData().catch(() => null);
+      if (cachedData && active) setState({ status: 'ready', data: cachedData, usingCache: true });
+
+      const freshResult = await freshResultPromise;
+      clearTimeout(timeout);
+      if (!active) return;
+      if (freshResult.ok) {
+        setState({ status: 'ready', data: freshResult.data, usingCache: false });
+      } else if (!cachedData) {
+        setState({ status: 'error' });
       }
     }
 
@@ -87,7 +93,7 @@ export function HomeScreen() {
     );
   }
 
-  const { data } = state;
+  const { data, usingCache } = state;
 
   // 2列のカードの幅 =（画面の幅 − 左右の余白 − カードの間のすき間）÷ 2
   const shopCardWidth = (width - spacing.screen * 2 - GRID_GAP) / 2;
@@ -112,6 +118,8 @@ export function HomeScreen() {
       >
         <Text style={styles.searchButtonText}>近くのお店を探す</Text>
       </Pressable>
+
+      {usingCache && <Text accessibilityRole="alert" style={styles.cacheNotice}>保存済みの一覧を表示しています。</Text>}
 
       <View style={styles.sectionHeader}>
         <SectionHeader
@@ -195,6 +203,16 @@ const styles = StyleSheet.create({
     ...fonts.body,
     color: colors.textOnDark,
     fontWeight: '700',
+  },
+  cacheNotice: {
+    color: '#66582f',
+    backgroundColor: '#fff4d6',
+    marginHorizontal: spacing.screen,
+    marginTop: spacing.sm,
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    textAlign: 'center',
+    fontSize: 12,
   },
   sectionHeader: {
     marginTop: 13,

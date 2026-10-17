@@ -4,6 +4,12 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../constants/theme';
 import { searchApi, type Prefecture, type SearchCountry } from '../data/searchApi';
+import {
+  getCachedCountries,
+  getCachedPrefectures,
+  saveCountries,
+  savePrefectures,
+} from '../repositories/locationCatalogRepository';
 
 const areas = [
   { name: '北海道・東北', min: 1, max: 7 },
@@ -19,6 +25,7 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
   const [items, setItems] = useState<(Prefecture & { flag?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [usingCache, setUsingCache] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -26,17 +33,36 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
     const timeout = setTimeout(() => controller.abort(), 15000);
     let active = true;
     async function load() {
-      try {
-        const items = prefectures
-          ? (await searchApi<{ regions: Prefecture[] }>('/api/countries/JP/regions', controller.signal)).regions
-          : (await searchApi<{ countries: SearchCountry[] }>('/api/countries', controller.signal)).countries.filter(item => item.cuisine_supported);
-        if (active) setItems(items);
-      } catch {
-        if (active) setError(`${prefectures ? '都道府県' : '国'}一覧を取得できませんでした。バックエンドの接続を確認してください。`);
-      } finally {
-        clearTimeout(timeout);
-        if (active) setLoading(false);
+      const freshResultPromise = (prefectures
+        ? searchApi<{ regions: Prefecture[] }>('/api/countries/JP/regions', controller.signal).then(result => result.regions)
+        : searchApi<{ countries: SearchCountry[] }>('/api/countries', controller.signal).then(result => result.countries))
+        .then(freshItems => ({ ok: true, items: freshItems } as const))
+        .catch(() => ({ ok: false } as const));
+      const cachedItems = await (prefectures ? getCachedPrefectures() : getCachedCountries()).catch(() => null);
+      if (cachedItems && active) {
+        setItems(prefectures ? cachedItems : cachedItems.filter(item => 'cuisine_supported' in item && item.cuisine_supported));
+        setUsingCache(true);
+        setLoading(false);
       }
+
+      const freshResult = await freshResultPromise;
+      clearTimeout(timeout);
+      if (!active) return;
+      if (freshResult.ok) {
+        if (prefectures) {
+          await savePrefectures(freshResult.items as Prefecture[]).catch(() => undefined);
+          setItems(freshResult.items);
+        } else {
+          const countries = freshResult.items as SearchCountry[];
+          await saveCountries(countries).catch(() => undefined);
+          setItems(countries.filter(item => item.cuisine_supported));
+        }
+        setUsingCache(false);
+        setError('');
+      } else if (!cachedItems) {
+        setError(`${prefectures ? '都道府県' : '国'}一覧を取得できませんでした。バックエンドの接続を確認してください。`);
+      }
+      setLoading(false);
     }
     void load();
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
@@ -60,6 +86,7 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
         <Pressable accessibilityRole="button" onPress={() => router.replace('/map')} style={({ pressed }) => [styles.stampButton, pressed && styles.pressed]}>
           <Text style={styles.stampButtonText}>旅のスタンプ地図を見る ›</Text>
         </Pressable>
+        {usingCache && <Text accessibilityRole="alert" style={styles.cacheNotice}>保存済みの一覧を表示しています。</Text>}
         {loading && <ActivityIndicator accessibilityLabel="一覧を読み込み中" />}
         {error ? <View style={styles.notice}>
           <Text accessibilityRole="alert">{error}</Text>
@@ -104,5 +131,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.5 },
   stampButton: { minHeight: 52, borderRadius: 14, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   stampButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  cacheNotice: { color: '#66582f', backgroundColor: '#fff4d6', borderRadius: 14, padding: 10, textAlign: 'center', fontSize: 12 },
   notice: { gap: 16 },
 });
