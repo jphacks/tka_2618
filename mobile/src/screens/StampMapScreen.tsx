@@ -1,22 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { StampMap } from '../components/StampMap';
-import { DemoModeNotice } from '../components/DemoModeNotice';
 import { colors, radius, spacing } from '../constants/theme';
 import { japanMapShapes } from '../data/japanMapShapes';
 import { japanMapViewBox, worldMapShapes, worldMapViewBox, type MapShape } from '../data/mapShapes';
 import { searchApi, type Prefecture, type SearchCountry } from '../data/searchApi';
 import type { VisitRecord } from '../data/visitTypes';
-import { clearDemoVisits, listVisits } from '../repositories/visitRepository';
-import { useDemoMode } from '../providers/DemoModeProvider';
+import { listVisits } from '../repositories/visitRepository';
 
 type MapMode = 'world' | 'japan';
 
 export function StampMapScreen() {
-  const demoMode = useDemoMode();
   const [mode, setMode] = useState<MapMode>('world');
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [names, setNames] = useState<ReadonlyMap<string, string>>(new Map());
@@ -94,22 +91,12 @@ export function StampMapScreen() {
 
   const searchSelectedRegion = () => {
     if (!selected) return;
-    if (demoMode.enabled) { router.push('/map/search'); return; }
     if (mode === 'japan') {
       router.push({ pathname: '/map/results', params: { country: 'JP', region: selected.code } });
       return;
     }
     if (selected.code === 'JP') { router.push('/map/prefectures'); return; }
     router.push({ pathname: '/map/results', params: { country: selected.code } });
-  };
-
-  const resetDemo = () => {
-    Alert.alert('デモ記録をリセット', 'デモで作成した訪問記録を削除しますか？', [
-      { text: 'キャンセル', style: 'cancel' },
-      { text: '削除する', style: 'destructive', onPress: () => {
-        void clearDemoVisits().then(() => setAttempt(value => value + 1)).catch(() => setError('デモ記録を削除できませんでした。'));
-      } },
-    ]);
   };
 
   return (
@@ -119,14 +106,6 @@ export function StampMapScreen() {
           <View><Text style={styles.eyebrow}>STAMP JOURNEY</Text><Text accessibilityRole="header" style={styles.title}>旅のスタンプ地図</Text></View>
           <Pressable accessibilityRole="button" onPress={() => router.push('/map/search')}><Text style={styles.searchLink}>お店を探す</Text></Pressable>
         </View>
-
-        {__DEV__ && (
-          <View style={styles.demoToggle}>
-            <View style={styles.demoToggleText}><Text style={styles.demoToggleTitle}>デモモード</Text><Text style={styles.demoToggleHelp}>発表中は現在地を取得しません</Text></View>
-            <Switch accessibilityLabel="デモモード" onValueChange={demoMode.setEnabled} value={demoMode.enabled} />
-          </View>
-        )}
-        {demoMode.enabled && <DemoModeNotice />}
 
         <View accessibilityRole="tablist" style={styles.segmented}>
           {(['world', 'japan'] as const).map(item => (
@@ -154,7 +133,6 @@ export function StampMapScreen() {
                 {selectedVisits.slice(0, 3).map(visit => (
                   <View key={visit.id} style={styles.visitRow}>
                     <View style={styles.visitText}><Text style={styles.visitName}>{visit.shopName}</Text><Text style={styles.visitDate}>{new Date(visit.visitedAt).toLocaleDateString('ja-JP')}</Text></View>
-                    {visit.verification.mode === 'demo' && <Text style={styles.demoBadge}>デモ</Text>}
                   </View>
                 ))}
                 {selectedVisits.length === 0 && selectedSearchSupported && (
@@ -179,7 +157,6 @@ export function StampMapScreen() {
           </>
         )}
 
-        {__DEV__ && <Pressable accessibilityRole="button" onPress={resetDemo} style={styles.resetButton}><Text style={styles.resetText}>デモ記録をリセット</Text></Pressable>}
         <Text style={styles.credit}>日本地図素材: lalamalink（CC0 1.0）／世界地図素材: @svg-maps/world（CC BY 4.0）</Text>
       </ScrollView>
     </SafeAreaView>
@@ -193,10 +170,6 @@ const styles = StyleSheet.create({
   eyebrow: { color: '#66736f', fontSize: 12, letterSpacing: 2, marginBottom: 6 },
   title: { color: colors.text, fontSize: 28, fontWeight: '700' },
   searchLink: { color: '#17613d', fontWeight: '700', paddingVertical: 8 },
-  demoToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, borderWidth: 1, borderColor: '#d7ddda', borderRadius: radius.sm, padding: 14 },
-  demoToggleText: { flex: 1, gap: 3 },
-  demoToggleTitle: { color: colors.text, fontSize: 15, fontWeight: '700' },
-  demoToggleHelp: { color: '#66736f', fontSize: 12 },
   segmented: { flexDirection: 'row', borderRadius: radius.sm, backgroundColor: '#edf0ee', padding: 4 },
   segment: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 11 },
   segmentActive: { backgroundColor: '#111' },
@@ -217,7 +190,6 @@ const styles = StyleSheet.create({
   visitText: { flex: 1, gap: 2 },
   visitName: { color: colors.text, fontSize: 14, fontWeight: '600' },
   visitDate: { color: '#746d5c', fontSize: 12 },
-  demoBadge: { color: '#fff', backgroundColor: '#17613d', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, fontSize: 11, fontWeight: '700' },
   findButton: { minHeight: 48, backgroundColor: '#111', borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 4, paddingHorizontal: 14 },
   findButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   unavailable: { color: '#746d5c', fontSize: 13, marginTop: 4 },
@@ -230,7 +202,5 @@ const styles = StyleSheet.create({
   notice: { alignItems: 'center', gap: spacing.md },
   error: { color: '#b33030', textAlign: 'center' },
   retry: { minHeight: 48, borderWidth: 1, borderColor: '#adb7b3', borderRadius: radius.sm, paddingHorizontal: spacing.lg, alignItems: 'center', justifyContent: 'center' },
-  resetButton: { minHeight: 48, borderRadius: radius.sm, borderWidth: 1, borderColor: '#c9a4a4', alignItems: 'center', justifyContent: 'center' },
-  resetText: { color: '#983535', fontWeight: '700' },
   credit: { color: '#7b8582', fontSize: 10, lineHeight: 15, textAlign: 'center' },
 });

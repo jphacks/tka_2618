@@ -1,12 +1,6 @@
 import * as Location from 'expo-location';
 
-import {
-  DEMO_LOCATION_ACCURACY_METERS,
-  DEMO_LOCATION_STEP_DELAY_MS,
-  DEMO_VISIT_DISTANCE_METERS,
-  MAX_LOCATION_ACCURACY_METERS,
-  MAX_VISIT_DISTANCE_METERS,
-} from '../constants/visits';
+import { MAX_LOCATION_ACCURACY_METERS, MAX_VISIT_DISTANCE_METERS } from '../constants/visits';
 import type { VisitVerification } from '../data/visitTypes';
 
 type Coordinates = { latitude: number; longitude: number };
@@ -14,8 +8,6 @@ type Coordinates = { latitude: number; longitude: number };
 export type VerificationResult =
   | { ok: true; verification: VisitVerification }
   | { ok: false; message: string };
-
-export type DemoVerificationStep = 'locating' | 'checking';
 
 const EARTH_RADIUS_METERS = 6_371_000;
 
@@ -68,30 +60,4 @@ export async function verifyCurrentVisit(restaurant: Coordinates, hasPhoto: bool
   } catch {
     return { ok: false, message: '現在地を取得できませんでした。位置情報を確認して、もう一度お試しください。' };
   }
-}
-
-function wait(milliseconds: number) {
-  return new Promise<void>(resolve => setTimeout(resolve, milliseconds));
-}
-
-export async function verifyDemoVisit(
-  hasPhoto: boolean,
-  onStep: (step: DemoVerificationStep) => void,
-): Promise<VerificationResult> {
-  if (!hasPhoto) return { ok: false, message: 'デモ訪問に使用する写真がありません。' };
-
-  onStep('locating');
-  await wait(DEMO_LOCATION_STEP_DELAY_MS);
-  onStep('checking');
-  await wait(DEMO_LOCATION_STEP_DELAY_MS);
-
-  return {
-    ok: true,
-    verification: {
-      mode: 'demo',
-      status: 'verified',
-      distanceMeters: DEMO_VISIT_DISTANCE_METERS,
-      accuracyMeters: DEMO_LOCATION_ACCURACY_METERS,
-    },
-  };
 }

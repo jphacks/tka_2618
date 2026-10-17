@@ -23,7 +23,7 @@ export type VisitedShop = {
   countryId: string;
   visitedAt: string; // 例: '2026-10-01'
   imageUrl?: string;
-  verificationMode?: 'location' | 'demo';
+  verificationMode?: 'location';
 };
 
 export type HomeData = {

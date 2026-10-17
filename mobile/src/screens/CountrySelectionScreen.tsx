@@ -3,10 +3,7 @@ import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../constants/theme';
-import { DemoModeNotice } from '../components/DemoModeNotice';
-import { demoRestaurants } from '../data/demoVisits';
 import { searchApi, type Prefecture, type SearchCountry } from '../data/searchApi';
-import { useDemoMode } from '../providers/DemoModeProvider';
 
 const areas = [
   { name: '北海道・東北', min: 1, max: 7 },
@@ -19,14 +16,12 @@ const areas = [
 ];
 
 export function CountrySelectionScreen({ prefectures = false }: { prefectures?: boolean }) {
-  const demoMode = useDemoMode();
   const [items, setItems] = useState<(Prefecture & { flag?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (demoMode.enabled) return;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     let active = true;
@@ -45,7 +40,7 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
     }
     void load();
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
-  }, [demoMode.enabled, prefectures, attempt]);
+  }, [prefectures, attempt]);
 
   const sections = prefectures
     ? areas.map(area => ({ name: area.name, items: items.filter(item => {
@@ -57,43 +52,16 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
   return (
     <SafeAreaView edges={[]} style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.eyebrow}>{demoMode.enabled ? 'PRESENTATION DEMO' : prefectures ? 'JAPANESE LOCAL FOOD' : 'WORLD FOOD NEARBY'}</Text>
-        <Text accessibilityRole="header" style={styles.title}>{demoMode.enabled ? 'デモ店舗を選ぶ' : prefectures ? 'どこの郷土料理を食べる？' : '近くの世界料理を探す'}</Text>
-        <Text style={styles.intro}>{demoMode.enabled
-          ? '現在地を使わず、固定店舗から訪問登録とスタンプ地図を確認できます。'
-          : prefectures
+        <Text style={styles.eyebrow}>{prefectures ? 'JAPANESE LOCAL FOOD' : 'WORLD FOOD NEARBY'}</Text>
+        <Text accessibilityRole="header" style={styles.title}>{prefectures ? 'どこの郷土料理を食べる？' : '近くの世界料理を探す'}</Text>
+        <Text style={styles.intro}>{prefectures
           ? '都道府県を選ぶと、現在地から3km以内でその地域の料理を探します。'
           : '国を選ぶと、現在地から3km以内のお店を地図に表示します。日本は都道府県から選べます。'}</Text>
         <Pressable accessibilityRole="button" onPress={() => router.replace('/map')} style={({ pressed }) => [styles.stampButton, pressed && styles.pressed]}>
           <Text style={styles.stampButtonText}>旅のスタンプ地図を見る ›</Text>
         </Pressable>
-        {demoMode.enabled && <DemoModeNotice />}
-        {demoMode.enabled && (
-          <View style={styles.demoSection}>
-            <Text accessibilityRole="header" style={styles.demoHeading}>固定デモ店舗</Text>
-            <Text style={styles.demoHelp}>訪問登録後、対象の国または都道府県が黒くなります。</Text>
-            {demoRestaurants.map(restaurant => (
-              <Pressable
-                key={restaurant.id}
-                accessibilityRole="button"
-                onPress={() => router.push({ pathname: '/map/visit', params: {
-                  shopId: restaurant.id,
-                  shopName: restaurant.name,
-                  latitude: String(restaurant.latitude),
-                  longitude: String(restaurant.longitude),
-                  country: restaurant.countryCode,
-                  ...(restaurant.prefectureCode ? { region: restaurant.prefectureCode } : {}),
-                  address: restaurant.address,
-                } })}
-                style={({ pressed }) => [styles.demoButton, pressed && styles.pressed]}
-              >
-                <Text style={styles.demoButtonText}>{restaurant.label} ›</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-        {!demoMode.enabled && loading && <ActivityIndicator accessibilityLabel="一覧を読み込み中" />}
-        {!demoMode.enabled && (error ? <View style={styles.notice}>
+        {loading && <ActivityIndicator accessibilityLabel="一覧を読み込み中" />}
+        {error ? <View style={styles.notice}>
           <Text accessibilityRole="alert">{error}</Text>
           <Pressable accessibilityRole="button" style={styles.button} onPress={() => { setLoading(true); setError(''); setAttempt(value => value + 1); }}><Text>再読み込み</Text></Pressable>
         </View> : !loading && sections.map(section => (
@@ -116,7 +84,7 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
               ))}
             </View>
           </View>
-        ))) }
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -136,10 +104,5 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.5 },
   stampButton: { minHeight: 52, borderRadius: 14, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   stampButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  demoSection: { gap: 10, backgroundColor: '#eef7f1', borderRadius: 14, padding: 16 },
-  demoHeading: { color: '#153d2b', fontSize: 17, fontWeight: '700' },
-  demoHelp: { color: '#4f675c', fontSize: 13, lineHeight: 20 },
-  demoButton: { minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: '#90bca5', backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
-  demoButtonText: { color: '#17613d', fontSize: 14, fontWeight: '700', textAlign: 'center' },
   notice: { gap: 16 },
 });

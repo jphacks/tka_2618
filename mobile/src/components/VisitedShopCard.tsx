@@ -27,7 +27,6 @@ export function VisitedShopCard({ shop, country, width, onPress }: Props) {
           {country.name}
         </Text>
       )}
-      {shop.verificationMode === 'demo' && <Text style={styles.demo}>デモ</Text>}
       <View style={styles.footer}>
         <Text style={styles.shopName} numberOfLines={1}>
           {shop.name}
@@ -58,17 +57,6 @@ const styles = StyleSheet.create({
     top: 13,
     left: 17,
     right: 17,
-  },
-  demo: {
-    ...fonts.caption,
-    color: '#fff',
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: '#17613d',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
   },
   footer: {
     height: 33,

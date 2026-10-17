@@ -25,10 +25,10 @@ Represent one restaurant visit, its user-authored content, and the evidence used
 
 | Field | Type | Rule |
 |---|---|---|
-| `mode` | `'location' \| 'demo'` | Verification source. |
+| `mode` | `'location'` | Verification source. |
 | `status` | `'verified' \| 'unverified'` | Only `verified` paints a map. |
 | `distanceMeters` | `number \| null` | Rounded distance from the restaurant; `null` when no check completed. |
-| `accuracyMeters` | `number \| null` | Rounded device accuracy; `null` for demo or incomplete checks. |
+| `accuracyMeters` | `number \| null` | Rounded device accuracy; `null` when no check completed. |
 
 Exact device latitude and longitude must not be persisted.
 

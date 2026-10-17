@@ -21,7 +21,7 @@ function isValidRecord(record: VisitRecord) {
     && record.photoUris.every(uri => typeof uri === 'string')
     && typeof record.memo === 'string'
     && typeof record.visitedAt === 'string'
-    && (record.verification?.mode === 'location' || record.verification?.mode === 'demo')
+    && record.verification?.mode === 'location'
     && (record.verification.status === 'verified' || record.verification.status === 'unverified')
     && (typeof record.verification.distanceMeters === 'number' || record.verification.distanceMeters === null)
     && (typeof record.verification.accuracyMeters === 'number' || record.verification.accuracyMeters === null);
@@ -48,9 +48,4 @@ export async function saveVisit(record: VisitRecord) {
   const visits = await listVisits();
   const next = [record, ...visits.filter(item => item.id !== record.id)];
   await writeVisits(next);
-}
-
-export async function clearDemoVisits() {
-  const visits = await listVisits();
-  await writeVisits(visits.filter(visit => visit.verification.mode !== 'demo'));
 }

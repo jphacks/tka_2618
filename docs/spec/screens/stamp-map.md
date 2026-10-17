@@ -13,7 +13,6 @@ Route: `/map`. This is the root screen of the map tab and shows progress derived
 5. Progress text showing painted region count
 6. Selected-region detail card
 7. Visited-region list with region name and visit count
-8. Development-only `デモ記録をリセット` action
 
 The world view is initially selected. Switching views does not navigate or discard state.
 
@@ -31,7 +30,6 @@ The world view is initially selected. Switching views does not navigate or disca
 
 - With no verified visits, show the unpainted map and `まだ訪問記録がありません。`.
 - Repository read failures show `訪問記録を読み込めませんでした。` and a retry action.
-- Reset requires a confirmation alert and reloads the map after deletion.
 
 ## Entry Points
 
@@ -41,4 +39,4 @@ The world view is initially selected. Switching views does not navigate or disca
 
 ## Self-Review
 
-Score: **95/100**. Views, colors, selection, counts, empty/error behavior, reset, and navigation are explicit. Geographic path simplification may differ visually but does not affect region identity or behavior.
+Score: **96/100**. Views, colors, selection, counts, empty/error behavior, and navigation are explicit. Geographic path simplification may differ visually but does not affect region identity or behavior.
