@@ -22,6 +22,7 @@ tka_2618/
 │   │   ├── constants/           # Theme and navigation constants
 │   │   ├── data/                # Data types, API clients, and fixtures
 │   │   ├── repositories/        # Local persistence implementations
+│   │   ├── providers/           # App-wide state providers
 │   │   ├── services/            # Location verification and photo services
 │   │   └── screens/             # Screen implementations
 │   ├── assets/                  # App icons and static images
@@ -51,6 +52,7 @@ tka_2618/
 | Shared UI | `mobile/src/components/` |
 | API client or frontend data types | `mobile/src/data/` |
 | Local visit persistence | `mobile/src/repositories/` |
+| App-wide state | `mobile/src/providers/` |
 | Visit verification or photo capture | `mobile/src/services/` |
 | Colors, spacing, or tab definitions | `mobile/src/constants/` |
 | Specifications | The matching directory under `docs/spec/` |

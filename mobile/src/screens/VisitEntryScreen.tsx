@@ -4,12 +4,14 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, Text
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { VisitPhotoPicker } from '../components/VisitPhotoPicker';
+import { DemoModeNotice } from '../components/DemoModeNotice';
 import { MAX_VISIT_MEMO_LENGTH } from '../constants/visits';
 import { colors, radius, spacing } from '../constants/theme';
 import type { VisitRecord, VisitVerification } from '../data/visitTypes';
 import { saveVisit } from '../repositories/visitRepository';
 import { captureVisitPhoto } from '../services/visitPhotos';
 import { createDemoVerification, verifyCurrentVisit } from '../services/visitVerification';
+import { useDemoMode } from '../providers/DemoModeProvider';
 
 type VisitParams = {
   shopId?: string | string[];
@@ -27,6 +29,7 @@ function single(value: string | string[] | undefined) {
 }
 
 export function VisitEntryScreen() {
+  const demoMode = useDemoMode();
   const params = useLocalSearchParams<VisitParams>();
   const shop = useMemo(() => {
     const latitude = Number(single(params.latitude));
@@ -123,7 +126,7 @@ export function VisitEntryScreen() {
         <Text accessibilityRole="header" style={styles.title}>{shop.name}</Text>
         {shop.address && <Text style={styles.address}>{shop.address}</Text>}
 
-        <VisitPhotoPicker photoUris={photoUris} disabled={busy} onAdd={() => void addPhoto()} onRemove={index => setPhotoUris(current => current.filter((_, itemIndex) => itemIndex !== index))} />
+        {demoMode.enabled ? <DemoModeNotice /> : <VisitPhotoPicker photoUris={photoUris} disabled={busy} onAdd={() => void addPhoto()} onRemove={index => setPhotoUris(current => current.filter((_, itemIndex) => itemIndex !== index))} />}
 
         <View style={styles.memoSection}>
           <View style={styles.memoHeader}><Text accessibilityRole="header" style={styles.heading}>メモ</Text><Text style={styles.counter}>{memo.length}/{MAX_VISIT_MEMO_LENGTH}</Text></View>
@@ -142,18 +145,18 @@ export function VisitEntryScreen() {
         {message && <Text accessibilityRole={isError ? 'alert' : undefined} style={isError ? styles.error : styles.status}>{message}</Text>}
         {busy && <ActivityIndicator color={colors.tabActive} />}
 
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void verifyLocation()} style={({ pressed }) => [styles.primaryButton, busy && styles.disabled, pressed && styles.pressed]}>
+        {!demoMode.enabled && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void verifyLocation()} style={({ pressed }) => [styles.primaryButton, busy && styles.disabled, pressed && styles.pressed]}>
           <Text style={styles.primaryText}>現在地で訪問確認する</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void saveUnverified()} style={({ pressed }) => [styles.secondaryButton, busy && styles.disabled, pressed && styles.pressed]}>
+        </Pressable>}
+        {!demoMode.enabled && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void saveUnverified()} style={({ pressed }) => [styles.secondaryButton, busy && styles.disabled, pressed && styles.pressed]}>
           <Text style={styles.secondaryText}>記録だけ保存する</Text>
-        </Pressable>
-        {__DEV__ && (
+        </Pressable>}
+        {demoMode.enabled && (
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => void verifyDemo()} style={({ pressed }) => [styles.demoButton, busy && styles.disabled, pressed && styles.pressed]}>
             <Text style={styles.demoText}>デモで訪問確認する</Text>
           </Pressable>
         )}
-        <Text style={styles.privacy}>現在地の緯度・経度は保存しません。確認結果と店舗までの距離だけを保存します。</Text>
+        <Text style={styles.privacy}>{demoMode.enabled ? 'デモでは現在地・カメラ・店舗APIを使用しません。' : '現在地の緯度・経度は保存しません。確認結果と店舗までの距離だけを保存します。'}</Text>
       </ScrollView>
     </SafeAreaView>
   );

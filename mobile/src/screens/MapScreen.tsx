@@ -17,15 +17,34 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import RestaurantMap from '../../RestaurantMap';
 import { colors, spacing } from '../constants/theme';
+import { DemoModeNotice } from '../components/DemoModeNotice';
+import { useDemoMode } from '../providers/DemoModeProvider';
 
 type SearchState = 'locating' | 'searching' | 'success' | 'error';
 type SearchResult = { restaurants: Restaurant[]; cuisine_name: string; search_keyword: string };
 
 export function MapScreen() {
+  const demoMode = useDemoMode();
   const params = useLocalSearchParams<{ country?: string | string[]; region?: string | string[] }>();
   const country = typeof params.country === 'string' ? params.country.toUpperCase() : '';
   const region = typeof params.region === 'string' ? params.region.toUpperCase() : '';
+  if (demoMode.enabled) return <DemoSearchBlocked />;
   return <SearchResults key={`${country}:${region}`} country={country} region={region} />;
+}
+
+function DemoSearchBlocked() {
+  return (
+    <SafeAreaView edges={[]} style={styles.safeArea}>
+      <View style={styles.demoBlocked}>
+        <DemoModeNotice />
+        <Text accessibilityRole="header" style={styles.title}>デモ店舗を選んでください</Text>
+        <Text style={styles.intro}>デモ中は現在地を取得せず、固定店舗から訪問登録を試します。</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.replace('/map/search')} style={styles.searchButton}>
+          <Text style={styles.searchButtonText}>デモ店舗を選ぶ</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
 }
 
 function SearchResults({ country, region }: { country: string; region: string }) {
@@ -187,6 +206,7 @@ function SearchResults({ country, region }: { country: string; region: string })
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: spacing.screen, paddingBottom: spacing.lg },
+  demoBlocked: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: spacing.screen, gap: spacing.lg },
   title: { color: colors.text, fontSize: 32, fontWeight: '700', marginTop: 12 },
   intro: { color: '#52645f', fontSize: 16, lineHeight: 25, marginTop: 12 },
   loader: { marginTop: 40 },

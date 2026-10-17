@@ -1,19 +1,22 @@
 import { useCallback, useMemo, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { StampMap } from '../components/StampMap';
+import { DemoModeNotice } from '../components/DemoModeNotice';
 import { colors, radius, spacing } from '../constants/theme';
 import { japanMapShapes } from '../data/japanMapShapes';
 import { japanMapViewBox, worldMapShapes, worldMapViewBox, type MapShape } from '../data/mapShapes';
 import { searchApi, type Prefecture, type SearchCountry } from '../data/searchApi';
 import type { VisitRecord } from '../data/visitTypes';
 import { clearDemoVisits, listVisits } from '../repositories/visitRepository';
+import { useDemoMode } from '../providers/DemoModeProvider';
 
 type MapMode = 'world' | 'japan';
 
 export function StampMapScreen() {
+  const demoMode = useDemoMode();
   const [mode, setMode] = useState<MapMode>('world');
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [names, setNames] = useState<ReadonlyMap<string, string>>(new Map());
@@ -97,6 +100,14 @@ export function StampMapScreen() {
           <Pressable accessibilityRole="button" onPress={() => router.push('/map/search')}><Text style={styles.searchLink}>お店を探す</Text></Pressable>
         </View>
 
+        {__DEV__ && (
+          <View style={styles.demoToggle}>
+            <View style={styles.demoToggleText}><Text style={styles.demoToggleTitle}>デモモード</Text><Text style={styles.demoToggleHelp}>発表中は現在地を取得しません</Text></View>
+            <Switch accessibilityLabel="デモモード" onValueChange={demoMode.setEnabled} value={demoMode.enabled} />
+          </View>
+        )}
+        {demoMode.enabled && <DemoModeNotice />}
+
         <View accessibilityRole="tablist" style={styles.segmented}>
           {(['world', 'japan'] as const).map(item => (
             <Pressable key={item} accessibilityRole="tab" accessibilityState={{ selected: mode === item }} onPress={() => selectMode(item)} style={[styles.segment, mode === item && styles.segmentActive]}>
@@ -145,6 +156,10 @@ const styles = StyleSheet.create({
   eyebrow: { color: '#66736f', fontSize: 12, letterSpacing: 2, marginBottom: 6 },
   title: { color: colors.text, fontSize: 28, fontWeight: '700' },
   searchLink: { color: '#17613d', fontWeight: '700', paddingVertical: 8 },
+  demoToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, borderWidth: 1, borderColor: '#d7ddda', borderRadius: radius.sm, padding: 14 },
+  demoToggleText: { flex: 1, gap: 3 },
+  demoToggleTitle: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  demoToggleHelp: { color: '#66736f', fontSize: 12 },
   segmented: { flexDirection: 'row', borderRadius: radius.sm, backgroundColor: '#edf0ee', padding: 4 },
   segment: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 11 },
   segmentActive: { backgroundColor: '#111' },
