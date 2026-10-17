@@ -235,7 +235,10 @@ curl --get 'http://localhost:8001/api/restaurants/nearby' \
 ## アプリ（React Native / Expo）
 
 `mobile/` の同じコードからiOS・Android・Web版を起動できます。
-国を選択し、端末の現在地から3km以内にある対応料理の店舗を地図と距離順の一覧で表示します。
+国を押すと次の画面で、端末の現在地から3km以内にある対応料理の店舗を地図と距離順の一覧で表示します。
+日本を選ぶと47都道府県の一覧へ進み、選んだ地域の料理を現在地の近くで検索します（その都道府県内のお店を探す機能ではありません）。
+`/api/restaurants/nearby` は任意の `region_code=JP-47` などを受け付けます。都道府県選択時は「沖縄料理」などの料理キーワードで検索するため、掲載情報によって対象店を拾えない場合があります。
+画面は `/map` → `/map/prefectures`（日本のみ）→ `/map/results?country=JP&region=JP-47` と遷移します。
 Web版の地図にはOpenStreetMap、iOS・Android版には端末のネイティブ地図を使用します。
 ホットペッパーのAPIキーは引き続きバックエンドだけで管理します。
 

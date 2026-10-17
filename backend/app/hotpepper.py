@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app.cuisines import CUISINES_BY_COUNTRY
+from app.locations import region_catalogs
 
 router = APIRouter(prefix="/api", tags=["restaurants"])
 HOTPEPPER_URL = "https://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
@@ -28,6 +29,8 @@ class NearbyRestaurant(BaseModel):
 class NearbyRestaurantResponse(BaseModel):
     country_code: str
     cuisine_name: str
+    region_code: str | None = None
+    search_keyword: str
     radius_m: int
     restaurants: list[NearbyRestaurant]
 
@@ -101,6 +104,7 @@ async def search_nearby_restaurants(
     lat: Annotated[float, Query(ge=-90, le=90)],
     lng: Annotated[float, Query(ge=-180, le=180)],
     count: Annotated[int, Query(ge=1, le=100)] = 30,
+    region_code: Annotated[str | None, Query(pattern=r"^[Jj][Pp]-[0-9]{2}$")] = None,
 ) -> NearbyRestaurantResponse:
     """選択した国の料理を、現在地から3km以内で検索します。"""
     normalized_code = country_code.upper()
@@ -108,9 +112,21 @@ async def search_nearby_restaurants(
     if cuisine is None:
         raise HTTPException(status_code=422, detail="この国の料理検索にはまだ対応していません。")
 
+    keyword = cuisine.search_keyword
+    cuisine_name = cuisine.name_ja
+    normalized_region = region_code.upper() if region_code else None
+    if normalized_region:
+        region = next((item for item in region_catalogs["JP"].regions if item.code == normalized_region), None)
+        if normalized_code != "JP" or region is None:
+            raise HTTPException(status_code=422, detail="日本の都道府県を指定してください。")
+        # 店舗の所在地ではなく料理のキーワードを変える。検索中心は常に現在地。
+        area_name = region.name_ja if region.name_ja == "北海道" else region.name_ja[:-1]
+        keyword = "京料理" if normalized_region == "JP-26" else f"{area_name}料理"
+        cuisine_name = f"{region.name_ja}の郷土料理"
+
     results = await _request_hotpepper(
         {
-            "keyword": cuisine.search_keyword,
+            "keyword": keyword,
             "lat": lat,
             "lng": lng,
             "range": 5,
@@ -153,7 +169,9 @@ async def search_nearby_restaurants(
     restaurants.sort(key=lambda restaurant: restaurant.distance_m)
     return NearbyRestaurantResponse(
         country_code=normalized_code,
-        cuisine_name=cuisine.name_ja,
+        cuisine_name=cuisine_name,
+        region_code=normalized_region,
+        search_keyword=keyword,
         radius_m=NEARBY_RADIUS_METERS,
         restaurants=restaurants,
     )
