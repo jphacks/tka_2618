@@ -8,12 +8,17 @@ export function formatDate(date: string) {
   return `${year}年${month}月${day}日`;
 }
 
+// '2026-10-18' → '10月18日（日）'
+export function formatDay(date: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  const weekday = WEEKDAYS[new Date(year, month - 1, day).getDay()];
+  return `${month}月${day}日（${weekday}）`;
+}
+
 // '2026-10-18T19:00' → '10月18日（日）19:00'
 export function formatDateTime(dateTime: string) {
   const [date, time] = dateTime.split('T');
-  const [year, month, day] = date.split('-').map(Number);
-  const weekday = WEEKDAYS[new Date(year, month - 1, day).getDay()];
-  return `${month}月${day}日（${weekday}）${time}`;
+  return `${formatDay(date)}${time}`;
 }
 
 // '2026-10-18T19:00' → '2026/10/18 19:00'（入力欄の表示用）

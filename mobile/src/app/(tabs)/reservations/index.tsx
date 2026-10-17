@@ -1,6 +1,4 @@
-// 予約タブ（②で作ります）
-import { PlaceholderScreen } from '../../../components/PlaceholderScreen';
+// 予約タブ：予約したお店の一覧
+import { ReservationsScreen } from '../../../screens/ReservationsScreen';
 
-export default function ReservationsTab() {
-  return <PlaceholderScreen title="予約したお店" />;
-}
+export default ReservationsScreen;
