@@ -20,6 +20,7 @@ export function StampMapScreen() {
   const [mode, setMode] = useState<MapMode>('world');
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [names, setNames] = useState<ReadonlyMap<string, string>>(new Map());
+  const [supportedCountries, setSupportedCountries] = useState<ReadonlySet<string>>(new Set());
   const [selected, setSelected] = useState<MapShape | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,10 +43,13 @@ export function StampMapScreen() {
             searchApi<{ countries: SearchCountry[] }>('/api/countries', controller.signal),
             searchApi<{ regions: Prefecture[] }>('/api/countries/JP/regions', controller.signal),
           ]);
-          if (active) setNames(new Map([
-            ...countries.countries.map(country => [country.code, country.name_ja] as const),
-            ...prefectures.regions.map(prefecture => [prefecture.code, prefecture.name_ja] as const),
-          ]));
+          if (active) {
+            setNames(new Map([
+              ...countries.countries.map(country => [country.code, country.name_ja] as const),
+              ...prefectures.regions.map(prefecture => [prefecture.code, prefecture.name_ja] as const),
+            ]));
+            setSupportedCountries(new Set(countries.countries.filter(country => country.cuisine_supported).map(country => country.code)));
+          }
         } catch {
           // 地図と訪問記録はオフラインでも表示し、地域名だけSVGの名称へフォールバックする。
         }
@@ -77,10 +81,26 @@ export function StampMapScreen() {
   const viewBox = mode === 'world' ? worldMapViewBox : japanMapViewBox;
   const counts = mode === 'world' ? worldCounts : japanCounts;
   const visitedRegions = shapes.filter(shape => (counts.get(shape.code) ?? 0) > 0);
+  const selectedVisits = selected ? verifiedVisits.filter(visit => mode === 'world'
+    ? visit.countryCode === selected.code
+    : visit.countryCode === 'JP' && visit.prefectureCode === selected.code) : [];
+  const selectedName = selected ? names.get(selected.code) ?? selected.name : '';
+  const selectedSearchSupported = Boolean(selected && (mode === 'japan' || supportedCountries.has(selected.code)));
 
   const selectMode = (nextMode: MapMode) => {
     setMode(nextMode);
     setSelected(null);
+  };
+
+  const searchSelectedRegion = () => {
+    if (!selected) return;
+    if (demoMode.enabled) { router.push('/map/search'); return; }
+    if (mode === 'japan') {
+      router.push({ pathname: '/map/results', params: { country: 'JP', region: selected.code } });
+      return;
+    }
+    if (selected.code === 'JP') { router.push('/map/prefectures'); return; }
+    router.push({ pathname: '/map/results', params: { country: selected.code } });
   };
 
   const resetDemo = () => {
@@ -121,11 +141,28 @@ export function StampMapScreen() {
         ) : (
           <>
             <StampMap shapes={shapes} viewBox={viewBox} visitCounts={counts} selectedCode={selected?.code ?? null} onSelect={setSelected} />
+            <View style={styles.legend}>
+              <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.visitedSwatch]} /><Text style={styles.legendText}>訪問済み</Text></View>
+              <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.unvisitedSwatch]} /><Text style={styles.legendText}>まだ未訪問</Text></View>
+              <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.selectedSwatch]} /><Text style={styles.legendText}>選択中</Text></View>
+            </View>
             <Text style={styles.progress}>{visitedRegions.length}地域を訪問済み</Text>
             {selected && (
               <View style={styles.selectedCard}>
-                <Text style={styles.selectedName}>{names.get(selected.code) ?? selected.name}</Text>
-                <Text style={styles.selectedCount}>{counts.get(selected.code) ?? 0}回の訪問</Text>
+                <Text style={styles.selectedName}>{selectedName}</Text>
+                <Text style={styles.selectedCount}>{selectedVisits.length}回の訪問</Text>
+                {selectedVisits.slice(0, 3).map(visit => (
+                  <View key={visit.id} style={styles.visitRow}>
+                    <View style={styles.visitText}><Text style={styles.visitName}>{visit.shopName}</Text><Text style={styles.visitDate}>{new Date(visit.visitedAt).toLocaleDateString('ja-JP')}</Text></View>
+                    {visit.verification.mode === 'demo' && <Text style={styles.demoBadge}>デモ</Text>}
+                  </View>
+                ))}
+                {selectedVisits.length === 0 && selectedSearchSupported && (
+                  <Pressable accessibilityRole="button" onPress={searchSelectedRegion} style={styles.findButton}>
+                    <Text style={styles.findButtonText}>{selectedName}のお店を探す</Text>
+                  </Pressable>
+                )}
+                {selectedVisits.length === 0 && !selectedSearchSupported && <Text style={styles.unavailable}>この国の店舗検索は準備中です。</Text>}
               </View>
             )}
             {visitedRegions.length === 0 ? <Text style={styles.empty}>まだ訪問記録がありません。</Text> : (
@@ -166,9 +203,24 @@ const styles = StyleSheet.create({
   segmentText: { color: '#52605c', fontWeight: '700' },
   segmentTextActive: { color: '#fff' },
   progress: { color: '#52605c', textAlign: 'center', fontWeight: '600' },
-  selectedCard: { backgroundColor: '#e8f4ed', borderRadius: radius.sm, padding: spacing.md, alignItems: 'center', gap: 4 },
-  selectedName: { color: '#153d2b', fontSize: 18, fontWeight: '700' },
-  selectedCount: { color: '#37644f' },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 14 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendSwatch: { width: 14, height: 14, borderWidth: 1 },
+  visitedSwatch: { backgroundColor: '#111', borderColor: '#111' },
+  unvisitedSwatch: { backgroundColor: '#fff', borderColor: '#929b98' },
+  selectedSwatch: { backgroundColor: '#fff', borderColor: '#c69214', borderWidth: 2 },
+  legendText: { color: '#66736f', fontSize: 12 },
+  selectedCard: { backgroundColor: '#fffaf0', borderColor: '#dfc170', borderWidth: 1, borderRadius: radius.sm, padding: spacing.md, gap: spacing.sm },
+  selectedName: { color: colors.text, fontSize: 20, fontWeight: '700' },
+  selectedCount: { color: '#66582f' },
+  visitRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#ded5bc', paddingTop: spacing.sm },
+  visitText: { flex: 1, gap: 2 },
+  visitName: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  visitDate: { color: '#746d5c', fontSize: 12 },
+  demoBadge: { color: '#fff', backgroundColor: '#17613d', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, fontSize: 11, fontWeight: '700' },
+  findButton: { minHeight: 48, backgroundColor: '#111', borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 4, paddingHorizontal: 14 },
+  findButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  unavailable: { color: '#746d5c', fontSize: 13, marginTop: 4 },
   empty: { color: '#66736f', textAlign: 'center', paddingVertical: spacing.lg },
   list: { gap: spacing.sm },
   heading: { color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 4 },

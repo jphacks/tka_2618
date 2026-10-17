@@ -28,8 +28,8 @@ export function StampMap({ shapes, viewBox, visitCounts, selectedCode, onSelect 
               key={shape.code}
               d={shape.path}
               fill={visited ? '#111111' : '#ffffff'}
-              stroke={selected ? '#1c8b59' : '#929b98'}
-              strokeWidth={selected ? 2.6 : 0.8}
+              stroke={selected ? '#c69214' : '#929b98'}
+              strokeWidth={selected ? 3 : 0.8}
               onPress={() => onSelect(shape)}
             />
           );
@@ -40,5 +40,5 @@ export function StampMap({ shapes, viewBox, visitCounts, selectedCode, onSelect 
 }
 
 const styles = StyleSheet.create({
-  frame: { alignSelf: 'center', backgroundColor: '#f6f7f6', borderRadius: 16, padding: 8, overflow: 'hidden' },
+  frame: { alignSelf: 'center', backgroundColor: '#f2f2f0', borderRadius: 16, padding: 8, overflow: 'hidden' },
 });

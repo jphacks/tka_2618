@@ -9,9 +9,11 @@ Route: `/map`. This is the root screen of the map tab and shows progress derived
 1. Title `旅のスタンプ地図`
 2. Segmented control with `世界` and `日本`
 3. White vector map with grey borders and verified regions filled black
-4. Progress text showing painted region count
-5. Visited-region list with region name and visit count
-6. Development-only `デモ記録をリセット` action
+4. Legend for visited and unvisited fills
+5. Progress text showing painted region count
+6. Selected-region detail card
+7. Visited-region list with region name and visit count
+8. Development-only `デモ記録をリセット` action
 
 The world view is initially selected. Switching views does not navigate or discard state.
 
@@ -20,7 +22,9 @@ The world view is initially selected. Switching views does not navigate or disca
 - World map regions use uppercase ISO country codes.
 - Japan map regions use the same prefecture codes returned by the backend.
 - Unvisited fill is white, visited fill is black, and borders are grey.
-- Pressing a region selects it and displays its name and verified visit count.
+- The selected region keeps its fill and receives a gold border.
+- Pressing a region displays its name, verified visit count, and up to three matching restaurant visits.
+- An unvisited searchable region displays an action that opens restaurant search for that country or prefecture. Unsupported countries display a preparation message instead.
 - The map must scale to the available width without horizontal scrolling.
 
 ## Empty and Error States
