@@ -1,10 +1,12 @@
-// 「今まで訪れたお店」に並ぶ、お店のカードです。
-// 写真の左上に国旗と国名、写真の下にお店の名前と訪れた日を表示します。
+// 「今まで訪れたお店」のカードです（Figma の「訪れたお店カード」）。
+// 写真の左上に国バッジ、写真の下にお店の名前と訪れた日を表示します。
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, radius, spacing } from '../constants/theme';
 import type { Country, VisitedShop } from '../data/types';
+import { formatDate } from '../utils/date';
 import { CardImage } from './CardImage';
+import { CountryBadge } from './CountryBadge';
 
 type Props = {
   shop: VisitedShop;
@@ -12,12 +14,6 @@ type Props = {
   width: number;
   onPress?: (shop: VisitedShop) => void;
 };
-
-// '2026-10-01' → '2026年10月1日'
-function formatDate(date: string) {
-  const [year, month, day] = date.split('-').map(Number);
-  return `${year}年${month}月${day}日`;
-}
 
 export function VisitedShopCard({ shop, country, width, onPress }: Props) {
   return (
@@ -30,11 +26,8 @@ export function VisitedShopCard({ shop, country, width, onPress }: Props) {
       <View>
         <CardImage imageUrl={shop.imageUrl} style={styles.image} />
         {country && (
-          // 写真の上でも読めるよう、白い下地のラベルにしています
-          <View style={styles.chip}>
-            <Text style={styles.chipText} numberOfLines={1}>
-              {country.flag} {country.name}
-            </Text>
+          <View style={styles.badge}>
+            <CountryBadge country={country} />
           </View>
         )}
       </View>
@@ -51,22 +44,15 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   image: {
-    aspectRatio: 1,
-    borderRadius: radius.md,
+    // Figma のカード（164 × 112）と同じ縦横比
+    aspectRatio: 164 / 112,
+    borderRadius: radius.lg,
   },
-  chip: {
+  badge: {
     position: 'absolute',
     top: spacing.sm,
     left: spacing.sm,
-    maxWidth: '85%',
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.full,
-    backgroundColor: colors.chipBackground,
-  },
-  chipText: {
-    ...fonts.label,
-    lineHeight: 24,
-    color: colors.text,
+    right: spacing.sm,
   },
   shopName: {
     ...fonts.bodyBold,

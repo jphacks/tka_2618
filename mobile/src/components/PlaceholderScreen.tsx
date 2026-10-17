@@ -2,8 +2,8 @@
 
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, spacing } from '../constants/theme';
+import { Header } from './Header';
 
 type Props = {
   title: string;
@@ -12,13 +12,13 @@ type Props = {
 
 export function PlaceholderScreen({ title, children }: Props) {
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    <View style={styles.screen}>
+      <Header title={title} />
       <View style={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>{title}</Text>
         <Text style={styles.note}>この画面は準備中です</Text>
         {children}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -31,10 +31,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: spacing.screen,
     gap: spacing.md,
-  },
-  title: {
-    ...fonts.sectionTitle,
-    color: colors.text,
   },
   note: {
     ...fonts.body,

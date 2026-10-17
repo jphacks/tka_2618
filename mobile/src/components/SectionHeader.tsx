@@ -1,8 +1,8 @@
-// セクションの見出しです。onPressMore を渡すと、右側に矢印ボタンが出ます。
+// セクションの見出しです。onPressMore を渡すと、右側に「>」の丸ボタンが出ます。
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, radius, spacing } from '../constants/theme';
-import { ArrowForwardIcon } from './Icons';
+import { ChevronRightIcon } from './Icons';
 
 type Props = {
   title: string;
@@ -23,7 +23,7 @@ export function SectionHeader({ title, onPressMore }: Props) {
           onPress={onPressMore}
           style={({ pressed }) => [styles.moreButton, pressed && styles.pressed]}
         >
-          <ArrowForwardIcon color={colors.iconButtonIcon} size={16} />
+          <ChevronRightIcon color={colors.text} size={16} />
         </Pressable>
       )}
     </View>
@@ -35,7 +35,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.screen,
     minHeight: 32,
   },
   title: {
@@ -46,7 +45,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.full,
-    backgroundColor: colors.iconButtonBackground,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },

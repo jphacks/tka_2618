@@ -15,6 +15,8 @@ import type { HomeData } from '../data/types';
 
 // 2列のカードの間のすき間
 const GRID_GAP = spacing.md;
+// 横スクロールの国カードの幅
+const COUNTRY_CARD_WIDTH = 136;
 
 export function HomeScreen() {
   const { width } = useWindowDimensions();
@@ -58,11 +60,11 @@ export function HomeScreen() {
       </View>
       <FlatList
         data={data.countries}
-        keyExtractor={country => country.id}
+        keyExtractor={country => country.code}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.countryList}
-        renderItem={({ item }) => <CountryCard country={item} />}
+        renderItem={({ item }) => <CountryCard country={item} width={COUNTRY_CARD_WIDTH} />}
       />
 
       <View style={styles.sectionHeader}>
@@ -73,7 +75,7 @@ export function HomeScreen() {
           <VisitedShopCard
             key={shop.id}
             shop={shop}
-            country={findCountry(data.countries, shop.countryId)}
+            country={findCountry(shop.countryCode)}
             width={shopCardWidth}
           />
         ))}
@@ -94,10 +96,12 @@ const styles = StyleSheet.create({
   firstSectionHeader: {
     marginTop: spacing.lg,
     marginBottom: spacing.md,
+    paddingHorizontal: spacing.screen,
   },
   sectionHeader: {
     marginTop: spacing.xl,
     marginBottom: spacing.md,
+    paddingHorizontal: spacing.screen,
   },
   countryList: {
     paddingHorizontal: spacing.screen,
