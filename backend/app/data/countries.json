@@ -1,0 +1,29 @@
+{
+  "default_country": "JP",
+  "countries": [
+    {
+      "code": "JP",
+      "name_ja": "日本",
+      "name_en": "Japan",
+      "flag": "🇯🇵",
+      "supported": true,
+      "has_regions": true
+    },
+    {
+      "code": "KR",
+      "name_ja": "韓国",
+      "name_en": "South Korea",
+      "flag": "🇰🇷",
+      "supported": false,
+      "has_regions": false
+    },
+    {
+      "code": "US",
+      "name_ja": "アメリカ",
+      "name_en": "United States",
+      "flag": "🇺🇸",
+      "supported": false,
+      "has_regions": false
+    }
+  ]
+}

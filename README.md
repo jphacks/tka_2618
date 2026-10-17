@@ -201,6 +201,21 @@ Dockerを使わない場合は、起動するシェルに `HOTPEPPER_API_KEY` �
 店舗情報を表示する画面を作成する際は、[公式のご利用案内](https://webservice.recruit.co.jp/doc/hotpepper/guideline.html)に従ってクレジットを表示してください。
 検索項目・店舗データの詳細は[APIリファレンス](https://webservice.recruit.co.jp/doc/hotpepper/reference.html)を参照してください。
 
+### 国・都道府県API
+
+国一覧と、国に紐づく地域一覧を取得できます。日本の地域一覧はISO形式のコードを持つ47都道府県です。
+
+```bash
+# 国一覧
+curl http://localhost:8001/api/countries
+
+# 日本の都道府県一覧
+curl http://localhost:8001/api/countries/JP/regions
+```
+
+国一覧の `supported` は現在サービスを提供できるか、`has_regions` は地域一覧を取得できるかを表します。
+現在は日本をサポートし、韓国とアメリカは将来対応として返します。
+
 ## アプリ（React Native / Expo）
 
 `mobile/` の同じコードからiOS・Android・Web版を起動できます。
