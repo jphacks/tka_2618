@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { VisitPhotoPicker } from '../components/VisitPhotoPicker';
 import { DemoModeNotice } from '../components/DemoModeNotice';
 import { MAX_VISIT_MEMO_LENGTH } from '../constants/visits';
 import { colors, radius, spacing } from '../constants/theme';
+import { DEMO_VISIT_PHOTO_URI } from '../data/demoVisits';
 import type { VisitRecord, VisitVerification } from '../data/visitTypes';
 import { saveVisit } from '../repositories/visitRepository';
 import { captureVisitPhoto } from '../services/visitPhotos';
@@ -99,7 +100,7 @@ export function VisitEntryScreen() {
   const verifyDemo = async () => {
     const photos = photoUris.length > 0
       ? photoUris
-      : [shop.imageUrl ?? Image.resolveAssetSource(require('../../assets/icon.png')).uri];
+      : [shop.imageUrl ?? DEMO_VISIT_PHOTO_URI];
     const result = createDemoVerification(photos.length > 0);
     if (!result.ok) { setIsError(true); setMessage(result.message); return; }
     setBusy(true); setMessage('デモ訪問を保存しています…'); setIsError(false);

@@ -26,7 +26,7 @@ The development country-selection screen provides two fixed entry points, one fo
 
 - Location verification follows the visit verification service specification.
 - Unverified save accepts zero photos and never paints a map.
-- Demo verification uses the first captured photo, otherwise the restaurant image, otherwise a bundled demo image.
+- Demo verification uses the first captured photo, otherwise the restaurant image, otherwise a platform-independent embedded PNG placeholder.
 - While an operation is running, all save and verification actions are disabled.
 
 ## Self-Review

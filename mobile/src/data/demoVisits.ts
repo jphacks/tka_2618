@@ -9,6 +9,9 @@ export type DemoRestaurant = {
   label: string;
 };
 
+export const DEMO_VISIT_PHOTO_URI =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
 export const demoRestaurants: DemoRestaurant[] = [
   {
     id: 'demo-italy-tokyo',
