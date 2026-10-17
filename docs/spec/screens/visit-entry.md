@@ -2,7 +2,7 @@
 
 ## Route and Input
 
-Route: `/map/visit`.
+Route: `/search/visit`.
 
 Required route parameters: restaurant ID, name, latitude, longitude, and cuisine-origin country code. Optional parameters: prefecture code, address, and restaurant image URL. Invalid or missing required values show `店舗情報を確認できませんでした。` and a back action.
 

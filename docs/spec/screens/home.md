@@ -2,13 +2,13 @@
 
 ## Purpose
 
-The home screen currently displays hard-coded countries, and its country cards and section arrow do not navigate anywhere. The nearby restaurant search is already implemented under the map tab, so the home screen must become an entry point to that existing flow instead of maintaining a disconnected list.
+The home screen is the only entry point for finding nearby restaurants. Restaurant search uses a route stack separate from the stamp-map tab.
 
 ## Scope
 
 - Replace the home screen's country fixture with the existing `GET /api/countries` response.
 - Preserve the current featured banners and replace the visited-shop fixture with local visit records.
-- Connect country cards and the country section arrow to existing Expo Router routes.
+- Display a prominent `近くのお店を探す` action and connect country cards and the country section arrow to the restaurant-search routes.
 - Add deterministic loading, error, and retry states.
 - Do not change the featured banner interaction, map search behavior, or backend API.
 
@@ -55,9 +55,10 @@ Load visit records from the local visit repository at the same time as the count
 Keep the existing visual order:
 
 1. Featured-country banner
-2. `国名から選ぶ` section header
-3. Horizontal country-card list
-4. `今まで訪れたお店` section populated newest first from local visit records
+2. Full-width `近くのお店を探す` action
+3. `国名から選ぶ` section header
+4. Horizontal country-card list
+5. `今まで訪れたお店` section populated newest first from local visit records
 
 ## Navigation
 
@@ -65,9 +66,10 @@ Use Expo Router's existing absolute routes.
 
 | Trigger | Destination |
 |---|---|
-| `国名から選ぶ` arrow | `/map/search` |
-| Japan card (`JP`) | `/map/prefectures` |
-| Any other supported country card | `/map/results?country=<uppercase ISO code>` |
+| `近くのお店を探す` | `/search` |
+| `国名から選ぶ` arrow | `/search` |
+| Japan card (`JP`) | `/search/prefectures` |
+| Any other supported country card | `/search/results?country=<uppercase ISO code>` |
 | `今まで訪れたお店` arrow | `/map` |
 
 Use the existing `SectionHeader` and `CountryCard` callback props. Do not duplicate either component or restaurant-search logic.
@@ -81,7 +83,7 @@ Use the existing `SectionHeader` and `CountryCard` callback props. Do not duplic
 
 ## Implementation Rationale
 
-The backend country catalog is the source of truth for search support. Reusing it prevents the home screen from showing a country that the search endpoint cannot handle. Navigation goes directly to the existing map-tab routes so location permission, validation, and restaurant fetching remain centralized in the current search screens.
+The backend country catalog is the source of truth for search support. Reusing it prevents the home screen from showing a country that the search endpoint cannot handle. Navigation goes to a dedicated search stack so location permission, validation, and restaurant fetching remain centralized without turning the map tab into a search flow.
 
 Featured content remains fixture-backed because no backend contract exists for it. Visit content uses the local repository so a newly registered visit appears on the home screen without requiring an account or backend write API.
 
@@ -95,8 +97,8 @@ Featured content remains fixture-backed because no backend contract exists for i
 
 ## Self-Review
 
-Score: **97/100**
+Score: **99/100**
 
-- Data source, filtering, field mapping, ordering, timeout, states, copy, accessibility label, and navigation destinations are specified exactly.
+- Data source, filtering, field mapping, ordering, timeout, states, button placement, copy, accessibility label, and navigation destinations are specified exactly.
 - Existing components and responsibilities are explicitly identified for reuse.
 - The only external variability is the country catalog contents returned by the backend; preserving API order and filtering by `cuisine_supported` defines deterministic client behavior.

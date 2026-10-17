@@ -71,8 +71,8 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
               {section.items.map(item => (
                 <Pressable key={item.code} accessibilityRole="button" accessibilityLabel={item.name_ja}
                   onPress={() => {
-                    if (!prefectures && item.code === 'JP') router.push('/map/prefectures');
-                    else router.push({ pathname: '/map/results', params: {
+                    if (!prefectures && item.code === 'JP') router.push('/search/prefectures');
+                    else router.push({ pathname: '/search/results', params: {
                       country: prefectures ? 'JP' : item.code,
                       ...(prefectures ? { region: item.code } : {}),
                     } });

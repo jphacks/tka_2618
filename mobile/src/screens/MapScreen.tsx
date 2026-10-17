@@ -99,7 +99,7 @@ function SearchResults({ country, region }: { country: string; region: string })
   return (
     <SafeAreaView edges={[]} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace(country === 'JP' ? '/map/prefectures' : '/map/search')}>
+        <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace(country === 'JP' ? '/search/prefectures' : '/search')}>
           <Text style={styles.link}>‹ 選び直す</Text>
         </Pressable>
         <Text accessibilityRole="header" style={styles.title}>{title}</Text>
@@ -145,7 +145,7 @@ function SearchResults({ country, region }: { country: string; region: string })
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => router.push({
-                      pathname: '/map/visit',
+                      pathname: '/search/visit',
                       params: {
                         shopId: restaurant.id,
                         shopName: restaurant.name,

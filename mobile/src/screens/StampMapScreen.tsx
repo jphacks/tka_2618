@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,7 +17,6 @@ export function StampMapScreen() {
   const [mode, setMode] = useState<MapMode>('world');
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [names, setNames] = useState<ReadonlyMap<string, string>>(new Map());
-  const [supportedCountries, setSupportedCountries] = useState<ReadonlySet<string>>(new Set());
   const [selected, setSelected] = useState<MapShape | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,7 +44,6 @@ export function StampMapScreen() {
               ...countries.countries.map(country => [country.code, country.name_ja] as const),
               ...prefectures.regions.map(prefecture => [prefecture.code, prefecture.name_ja] as const),
             ]));
-            setSupportedCountries(new Set(countries.countries.filter(country => country.cuisine_supported).map(country => country.code)));
           }
         } catch {
           // 地図と訪問記録はオフラインでも表示し、地域名だけSVGの名称へフォールバックする。
@@ -82,21 +80,10 @@ export function StampMapScreen() {
     ? visit.countryCode === selected.code
     : visit.countryCode === 'JP' && visit.prefectureCode === selected.code) : [];
   const selectedName = selected ? names.get(selected.code) ?? selected.name : '';
-  const selectedSearchSupported = Boolean(selected && (mode === 'japan' || supportedCountries.has(selected.code)));
 
   const selectMode = (nextMode: MapMode) => {
     setMode(nextMode);
     setSelected(null);
-  };
-
-  const searchSelectedRegion = () => {
-    if (!selected) return;
-    if (mode === 'japan') {
-      router.push({ pathname: '/map/results', params: { country: 'JP', region: selected.code } });
-      return;
-    }
-    if (selected.code === 'JP') { router.push('/map/prefectures'); return; }
-    router.push({ pathname: '/map/results', params: { country: selected.code } });
   };
 
   return (
@@ -104,7 +91,6 @@ export function StampMapScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.titleRow}>
           <View><Text style={styles.eyebrow}>STAMP JOURNEY</Text><Text accessibilityRole="header" style={styles.title}>旅のスタンプ地図</Text></View>
-          <Pressable accessibilityRole="button" onPress={() => router.push('/map/search')}><Text style={styles.searchLink}>お店を探す</Text></Pressable>
         </View>
 
         <View accessibilityRole="tablist" style={styles.segmented}>
@@ -135,12 +121,6 @@ export function StampMapScreen() {
                     <View style={styles.visitText}><Text style={styles.visitName}>{visit.shopName}</Text><Text style={styles.visitDate}>{new Date(visit.visitedAt).toLocaleDateString('ja-JP')}</Text></View>
                   </View>
                 ))}
-                {selectedVisits.length === 0 && selectedSearchSupported && (
-                  <Pressable accessibilityRole="button" onPress={searchSelectedRegion} style={styles.findButton}>
-                    <Text style={styles.findButtonText}>{selectedName}のお店を探す</Text>
-                  </Pressable>
-                )}
-                {selectedVisits.length === 0 && !selectedSearchSupported && <Text style={styles.unavailable}>この国の店舗検索は準備中です。</Text>}
               </View>
             )}
             {visitedRegions.length === 0 ? <Text style={styles.empty}>まだ訪問記録がありません。</Text> : (
@@ -169,7 +149,6 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.md },
   eyebrow: { color: '#66736f', fontSize: 12, letterSpacing: 2, marginBottom: 6 },
   title: { color: colors.text, fontSize: 28, fontWeight: '700' },
-  searchLink: { color: '#17613d', fontWeight: '700', paddingVertical: 8 },
   segmented: { flexDirection: 'row', borderRadius: radius.sm, backgroundColor: '#edf0ee', padding: 4 },
   segment: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 11 },
   segmentActive: { backgroundColor: '#111' },
@@ -190,9 +169,6 @@ const styles = StyleSheet.create({
   visitText: { flex: 1, gap: 2 },
   visitName: { color: colors.text, fontSize: 14, fontWeight: '600' },
   visitDate: { color: '#746d5c', fontSize: 12 },
-  findButton: { minHeight: 48, backgroundColor: '#111', borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 4, paddingHorizontal: 14 },
-  findButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  unavailable: { color: '#746d5c', fontSize: 13, marginTop: 4 },
   empty: { color: '#66736f', textAlign: 'center', paddingVertical: spacing.lg },
   list: { gap: spacing.sm },
   heading: { color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 4 },

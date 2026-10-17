@@ -23,7 +23,7 @@ The world view is initially selected. Switching views does not navigate or disca
 - Unvisited fill is white, visited fill is black, and borders are grey.
 - The selected region keeps its fill and receives a gold border.
 - Pressing a region displays its name, verified visit count, and up to three matching restaurant visits.
-- An unvisited searchable region displays an action that opens restaurant search for that country or prefecture. Unsupported countries display a preparation message instead.
+- Selecting a region only displays stamp progress and matching visit history. It never starts restaurant search.
 - The map must scale to the available width without horizontal scrolling.
 
 ## Empty and Error States
@@ -34,9 +34,9 @@ The world view is initially selected. Switching views does not navigate or disca
 ## Entry Points
 
 - Pressing the map tab always opens this screen.
-- `お店を探す` opens `/map/search`, which contains the country-selection flow.
 - Successful visit registration opens this screen.
+- The screen contains no restaurant-search navigation. Restaurant search starts from the home screen.
 
 ## Self-Review
 
-Score: **96/100**. Views, colors, selection, counts, empty/error behavior, and navigation are explicit. Geographic path simplification may differ visually but does not affect region identity or behavior.
+Score: **98/100**. Views, colors, selection, counts, empty/error behavior, navigation boundaries, and the search exclusion are explicit. Geographic path simplification may differ visually but does not affect region identity or behavior.

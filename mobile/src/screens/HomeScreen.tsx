@@ -95,20 +95,28 @@ export function HomeScreen() {
   const openCountry = (country: Country) => {
     const countryCode = country.id.toUpperCase();
     if (countryCode === 'JP') {
-      router.navigate('/map/prefectures');
+      router.navigate('/search/prefectures');
       return;
     }
-    router.navigate({ pathname: '/map/results', params: { country: countryCode } });
+    router.navigate({ pathname: '/search/results', params: { country: countryCode } });
   };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <FeaturedBanner title="おすすめの国特集" items={data.featured} />
 
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.navigate('/search')}
+        style={({ pressed }) => [styles.searchButton, pressed && styles.pressed]}
+      >
+        <Text style={styles.searchButtonText}>近くのお店を探す</Text>
+      </Pressable>
+
       <View style={styles.sectionHeader}>
         <SectionHeader
           title="国名から選ぶ"
-          onPressMore={() => router.navigate('/map/search')}
+          onPressMore={() => router.navigate('/search')}
         />
       </View>
       <FlatList
@@ -171,6 +179,21 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: spacing.lg,
+  },
+  searchButton: {
+    minHeight: 54,
+    marginHorizontal: spacing.screen,
+    marginTop: spacing.lg,
+    borderRadius: radius.sm,
+    backgroundColor: colors.tabActive,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  searchButtonText: {
+    ...fonts.body,
+    color: colors.textOnDark,
+    fontWeight: '700',
   },
   sectionHeader: {
     marginTop: 13,
