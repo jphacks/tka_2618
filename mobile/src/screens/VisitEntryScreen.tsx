@@ -70,7 +70,7 @@ export function VisitEntryScreen() {
       verification,
     };
     await saveVisit(record);
-    router.replace('/map/stamps');
+    router.replace('/map');
   };
 
   const verifyLocation = async () => {

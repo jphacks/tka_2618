@@ -18,7 +18,7 @@ Display in this order:
 6. `デモで訪問確認する` action when `__DEV__` is true
 7. Inline progress, success, or error message
 
-Successful save replaces the current route with `/map/stamps` so the updated map is immediately visible.
+Successful save replaces the current route with `/map` so the updated stamp map is immediately visible.
 
 The development country-selection screen provides two fixed entry points, one for Italy and one for Tokyo, so the entire registration flow can be demonstrated without location search or restaurant API availability.
 

@@ -1,3 +1,3 @@
-import { CountrySelectionScreen } from '../../screens/CountrySelectionScreen';
+import { StampMapScreen } from '../../screens/StampMapScreen';
 
-export default CountrySelectionScreen;
+export default StampMapScreen;

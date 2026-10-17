@@ -108,7 +108,7 @@ export function HomeScreen() {
       <View style={styles.sectionHeader}>
         <SectionHeader
           title="国名から選ぶ"
-          onPressMore={() => router.navigate('/map')}
+          onPressMore={() => router.navigate('/map/search')}
         />
       </View>
       <FlatList
@@ -121,7 +121,7 @@ export function HomeScreen() {
       />
 
       <View style={[styles.sectionHeader, styles.visitedHeader]}>
-        <SectionHeader title="今まで訪れたお店" onPressMore={() => router.navigate('/map/stamps')} />
+        <SectionHeader title="今まで訪れたお店" onPressMore={() => router.navigate('/map')} />
       </View>
       <View style={styles.shopGrid}>
         {data.visitedShops.map(shop => (

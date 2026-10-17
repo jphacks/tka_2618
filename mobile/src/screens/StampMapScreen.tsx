@@ -94,7 +94,7 @@ export function StampMapScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.titleRow}>
           <View><Text style={styles.eyebrow}>STAMP JOURNEY</Text><Text accessibilityRole="header" style={styles.title}>旅のスタンプ地図</Text></View>
-          <Pressable accessibilityRole="button" onPress={() => router.push('/map')}><Text style={styles.searchLink}>お店を探す</Text></Pressable>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/map/search')}><Text style={styles.searchLink}>お店を探す</Text></Pressable>
         </View>
 
         <View accessibilityRole="tablist" style={styles.segmented}>

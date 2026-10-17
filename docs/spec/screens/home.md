@@ -65,10 +65,10 @@ Use Expo Router's existing absolute routes.
 
 | Trigger | Destination |
 |---|---|
-| `国名から選ぶ` arrow | `/map` |
+| `国名から選ぶ` arrow | `/map/search` |
 | Japan card (`JP`) | `/map/prefectures` |
 | Any other supported country card | `/map/results?country=<uppercase ISO code>` |
-| `今まで訪れたお店` arrow | `/map/stamps` |
+| `今まで訪れたお店` arrow | `/map` |
 
 Use the existing `SectionHeader` and `CountryCard` callback props. Do not duplicate either component or restaurant-search logic.
 

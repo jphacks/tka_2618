@@ -51,14 +51,14 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
     : [{ name: '料理の国', items }];
 
   return (
-    <SafeAreaView edges={prefectures ? [] : ['top']} style={styles.screen}>
+    <SafeAreaView edges={[]} style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.eyebrow}>{prefectures ? 'JAPANESE LOCAL FOOD' : 'WORLD FOOD NEARBY'}</Text>
         <Text accessibilityRole="header" style={styles.title}>{prefectures ? 'どこの郷土料理を食べる？' : '近くの世界料理を探す'}</Text>
         <Text style={styles.intro}>{prefectures
           ? '都道府県を選ぶと、現在地から3km以内でその地域の料理を探します。'
           : '国を選ぶと、現在地から3km以内のお店を地図に表示します。日本は都道府県から選べます。'}</Text>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/map/stamps')} style={({ pressed }) => [styles.stampButton, pressed && styles.pressed]}>
+        <Pressable accessibilityRole="button" onPress={() => router.replace('/map')} style={({ pressed }) => [styles.stampButton, pressed && styles.pressed]}>
           <Text style={styles.stampButtonText}>旅のスタンプ地図を見る ›</Text>
         </Pressable>
         {__DEV__ && (

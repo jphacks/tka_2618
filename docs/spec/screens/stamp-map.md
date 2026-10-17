@@ -2,7 +2,7 @@
 
 ## Route and Purpose
 
-Route: `/map/stamps`. Show progress derived from locally saved verified visits.
+Route: `/map`. This is the root screen of the map tab and shows progress derived from locally saved verified visits.
 
 ## Layout
 
@@ -31,7 +31,8 @@ The world view is initially selected. Switching views does not navigate or disca
 
 ## Entry Points
 
-- Add `スタンプ地図を見る` to the country-selection screen.
+- Pressing the map tab always opens this screen.
+- `お店を探す` opens `/map/search`, which contains the country-selection flow.
 - Successful visit registration opens this screen.
 
 ## Self-Review
