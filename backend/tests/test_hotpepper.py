@@ -3,6 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.regional_cuisines import REGIONAL_CUISINES
 
 client = TestClient(app)
 
@@ -138,9 +139,10 @@ def test_upstream_failure(monkeypatch, failure, status):
 def test_prefecture_cuisine_search_keeps_current_location(monkeypatch):
     """東京から沖縄を選んでも、沖縄県への地理的な絞り込みはしない。"""
     monkeypatch.setenv("HOTPEPPER_API_KEY", "test-secret")
+    requested_keywords = []
 
     async def fake_get(self, url, *, params):
-        assert params["keyword"] == "沖縄料理"
+        requested_keywords.append(params["keyword"])
         assert params["lat"] == 35.6812
         assert params["lng"] == 139.7671
         assert params["range"] == 5
@@ -158,7 +160,8 @@ def test_prefecture_cuisine_search_keeps_current_location(monkeypatch):
     data = response.json()
     assert data["region_code"] == "JP-47"
     assert data["cuisine_name"] == "沖縄県の郷土料理"
-    assert data["search_keyword"] == "沖縄料理"
+    assert requested_keywords == ["沖縄料理", "ゴーヤチャンプルー", "ソーキそば"]
+    assert data["search_keyword"] == "沖縄料理、ゴーヤチャンプルー、ソーキそば"
     assert [item["id"] for item in data["restaurants"]] == ["near"]
 
 
@@ -173,23 +176,48 @@ def test_invalid_prefecture_does_not_call_upstream(monkeypatch, country, region)
     }).status_code == 422
 
 
-def test_all_prefectures_support_cuisine_search(monkeypatch):
-    monkeypatch.setenv("HOTPEPPER_API_KEY", "test-secret")
-    keywords = []
-
-    async def fake_get(self, url, *, params):
-        keywords.append(params["keyword"])
-        return httpx.Response(200, request=httpx.Request("GET", url), json={"results": {"shop": []}})
-
-    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
+def test_all_prefectures_define_multiple_cuisine_keywords():
     regions = client.get("/api/countries/JP/regions").json()["regions"]
     assert len(regions) == 47
-    for region in regions:
-        response = client.get("/api/restaurants/nearby", params={
-            "country_code": "JP", "region_code": region["code"], "lat": 35, "lng": 139,
-        })
-        assert response.status_code == 200
-        assert response.json()["cuisine_name"] == f'{region["name_ja"]}の郷土料理'
-    assert len(set(keywords)) == 47
-    assert "北海道料理" in keywords
-    assert "京料理" in keywords
+    assert set(REGIONAL_CUISINES) == {region["code"] for region in regions}
+    assert all(2 <= len(keywords) <= 3 for keywords in REGIONAL_CUISINES.values())
+    assert REGIONAL_CUISINES["JP-01"] == ("北海道料理", "ジンギスカン", "スープカレー")
+    assert REGIONAL_CUISINES["JP-26"] == ("京料理", "おばんざい", "湯豆腐")
+
+
+def test_prefecture_search_combines_deduplicates_sorts_and_stops(monkeypatch):
+    monkeypatch.setenv("HOTPEPPER_API_KEY", "test-secret")
+    requested_keywords = []
+
+    async def fake_get(self, url, *, params):
+        requested_keywords.append(params["keyword"])
+        shops = {
+            "沖縄料理": [
+                {"id": "shared", "name": "沖縄料理店", "lat": 35.6820, "lng": 139.7671},
+            ],
+            "ゴーヤチャンプルー": [
+                {"id": "shared", "name": "重複店舗", "lat": 35.6820, "lng": 139.7671},
+                {"id": "nearest", "name": "一番近い店", "lat": 35.6813, "lng": 139.7671},
+            ],
+        }[params["keyword"]]
+        return httpx.Response(
+            200,
+            request=httpx.Request("GET", url),
+            json={"results": {"shop": shops}},
+        )
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
+    response = client.get("/api/restaurants/nearby", params={
+        "country_code": "JP",
+        "region_code": "JP-47",
+        "lat": 35.6812,
+        "lng": 139.7671,
+        "count": 2,
+    })
+
+    assert response.status_code == 200
+    data = response.json()
+    assert requested_keywords == ["沖縄料理", "ゴーヤチャンプルー"]
+    assert data["search_keyword"] == "沖縄料理、ゴーヤチャンプルー"
+    assert [restaurant["id"] for restaurant in data["restaurants"]] == ["nearest", "shared"]
+    assert data["restaurants"][1]["name"] == "沖縄料理店"

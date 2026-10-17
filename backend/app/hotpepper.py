@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from app.cuisines import CUISINES_BY_COUNTRY
 from app.locations import region_catalogs
+from app.regional_cuisines import REGIONAL_CUISINES
 
 router = APIRouter(prefix="/api", tags=["restaurants"])
 HOTPEPPER_URL = "https://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
@@ -78,6 +79,42 @@ def _nested_text(value: object, *keys: str) -> str | None:
     return value if isinstance(value, str) and value else None
 
 
+def _nearby_restaurants(
+    shops: list[object], lat: float, lng: float
+) -> list[NearbyRestaurant]:
+    restaurants = []
+    for shop in shops:
+        if not isinstance(shop, dict):
+            continue
+        try:
+            shop_lat = float(shop["lat"])
+            shop_lng = float(shop["lng"])
+        except (KeyError, TypeError, ValueError):
+            continue
+
+        distance_m = _distance_meters(lat, lng, shop_lat, shop_lng)
+        if distance_m > NEARBY_RADIUS_METERS:
+            continue
+        shop_id = shop.get("id")
+        name = shop.get("name")
+        if not isinstance(shop_id, str) or not isinstance(name, str):
+            continue
+        restaurants.append(
+            NearbyRestaurant(
+                id=shop_id,
+                name=name,
+                distance_m=distance_m,
+                address=shop.get("address") if isinstance(shop.get("address"), str) else None,
+                lat=shop_lat,
+                lng=shop_lng,
+                genre=_nested_text(shop.get("genre"), "name"),
+                image_url=_nested_text(shop.get("photo"), "mobile", "l"),
+                detail_url=_nested_text(shop.get("urls"), "pc"),
+            )
+        )
+    return restaurants
+
+
 @router.get("/restaurants")
 async def search_restaurants(
     keyword: Annotated[str, Query(min_length=1, max_length=100)],
@@ -112,66 +149,43 @@ async def search_nearby_restaurants(
     if cuisine is None:
         raise HTTPException(status_code=422, detail="この国の料理検索にはまだ対応していません。")
 
-    keyword = cuisine.search_keyword
+    keywords = (cuisine.search_keyword,)
     cuisine_name = cuisine.name_ja
     normalized_region = region_code.upper() if region_code else None
     if normalized_region:
         region = next((item for item in region_catalogs["JP"].regions if item.code == normalized_region), None)
         if normalized_code != "JP" or region is None:
             raise HTTPException(status_code=422, detail="日本の都道府県を指定してください。")
-        # 店舗の所在地ではなく料理のキーワードを変える。検索中心は常に現在地。
-        area_name = region.name_ja if region.name_ja == "北海道" else region.name_ja[:-1]
-        keyword = "京料理" if normalized_region == "JP-26" else f"{area_name}料理"
+        keywords = REGIONAL_CUISINES[normalized_region]
         cuisine_name = f"{region.name_ja}の郷土料理"
 
-    results = await _request_hotpepper(
-        {
-            "keyword": keyword,
-            "lat": lat,
-            "lng": lng,
-            "range": 5,
-            "order": 4,
-            "count": count,
-            "start": 1,
-        }
-    )
-    restaurants = []
-    for shop in results["shop"]:
-        if not isinstance(shop, dict):
-            continue
-        try:
-            shop_lat = float(shop["lat"])
-            shop_lng = float(shop["lng"])
-        except (KeyError, TypeError, ValueError):
-            continue
-
-        distance_m = _distance_meters(lat, lng, shop_lat, shop_lng)
-        if distance_m > NEARBY_RADIUS_METERS:
-            continue
-        shop_id = shop.get("id")
-        name = shop.get("name")
-        if not isinstance(shop_id, str) or not isinstance(name, str):
-            continue
-        restaurants.append(
-            NearbyRestaurant(
-                id=shop_id,
-                name=name,
-                distance_m=distance_m,
-                address=shop.get("address") if isinstance(shop.get("address"), str) else None,
-                lat=shop_lat,
-                lng=shop_lng,
-                genre=_nested_text(shop.get("genre"), "name"),
-                image_url=_nested_text(shop.get("photo"), "mobile", "l"),
-                detail_url=_nested_text(shop.get("urls"), "pc"),
-            )
+    restaurants_by_id: dict[str, NearbyRestaurant] = {}
+    attempted_keywords = []
+    for keyword in keywords:
+        attempted_keywords.append(keyword)
+        results = await _request_hotpepper(
+            {
+                "keyword": keyword,
+                "lat": lat,
+                "lng": lng,
+                "range": 5,
+                "order": 4,
+                "count": count,
+                "start": 1,
+            }
         )
+        for restaurant in _nearby_restaurants(results["shop"], lat, lng):
+            restaurants_by_id.setdefault(restaurant.id, restaurant)
+        if len(restaurants_by_id) >= count:
+            break
 
+    restaurants = list(restaurants_by_id.values())
     restaurants.sort(key=lambda restaurant: restaurant.distance_m)
     return NearbyRestaurantResponse(
         country_code=normalized_code,
         cuisine_name=cuisine_name,
         region_code=normalized_region,
-        search_keyword=keyword,
+        search_keyword="、".join(attempted_keywords),
         radius_m=NEARBY_RADIUS_METERS,
-        restaurants=restaurants,
+        restaurants=restaurants[:count],
     )
