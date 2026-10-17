@@ -1,61 +1,40 @@
 // ホーム画面（Figma の「home」）です。
 // 上から「おすすめの国特集」「国名から選ぶ」「今まで訪れたお店」の順に並びます。
 
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { CountryCard } from '../components/CountryCard';
 import { FeaturedBanner } from '../components/FeaturedBanner';
 import { SectionHeader } from '../components/SectionHeader';
 import { VisitedShopCard } from '../components/VisitedShopCard';
-import { colors, fonts, radius, spacing } from '../constants/theme';
-import { findCountry, getCachedHomeData, getFreshHomeData } from '../data/api';
-import type { Country, HomeData } from '../data/types';
+import { colors, fonts, spacing } from '../constants/theme';
+import { useAppData } from '../data/AppDataContext';
+import { findCountry, getHomeData } from '../data/api';
+import type { HomeData } from '../data/types';
 
-const GRID_GAP = 18;
-const HOME_LOAD_TIMEOUT_MS = 15_000;
-
-type HomeState =
-  | { status: 'loading' }
-  | { status: 'ready'; data: HomeData; usingCache: boolean }
-  | { status: 'error' };
+// 2列のカードの間のすき間
+const GRID_GAP = spacing.md;
+// 横スクロールの国カードの幅
+const COUNTRY_CARD_WIDTH = 136;
 
 export function HomeScreen() {
   const { width } = useWindowDimensions();
-  const [state, setState] = useState<HomeState>({ status: 'loading' });
-  const [attempt, setAttempt] = useState(0);
+  const [data, setData] = useState<HomeData | null>(null);
+  // 今まで訪れたお店は、写真を記録すると増えるので共有データから読みます
+  const { visitedShops } = useAppData();
 
-  useFocusEffect(useCallback(() => {
-    void attempt;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), HOME_LOAD_TIMEOUT_MS);
+  // データを読み込みます（今はダミーデータ。src/data/api.ts を参照）
+  useEffect(() => {
     let active = true;
-
-    async function load() {
-      const freshResultPromise = getFreshHomeData(controller.signal)
-        .then(data => ({ ok: true, data } as const))
-        .catch(() => ({ ok: false } as const));
-      const cachedData = await getCachedHomeData().catch(() => null);
-      if (cachedData && active) setState({ status: 'ready', data: cachedData, usingCache: true });
-
-      const freshResult = await freshResultPromise;
-      clearTimeout(timeout);
-      if (!active) return;
-      if (freshResult.ok) {
-        setState({ status: 'ready', data: freshResult.data, usingCache: false });
-      } else if (!cachedData) {
-        setState({ status: 'error' });
-      }
-    }
-
-    void load();
+    getHomeData().then(result => {
+      if (active) setData(result);
+    });
     return () => {
       active = false;
-      clearTimeout(timeout);
-      controller.abort();
     };
-  }, [attempt]));
+  }, []);
 
   // バナーが暗い色なので、ホームを表示している間だけ時計などの文字を白にします
   useFocusEffect(
@@ -65,88 +44,45 @@ export function HomeScreen() {
     }, []),
   );
 
-  if (state.status === 'loading') {
-    return (
-      <View style={[styles.screen, styles.centered]}>
-        <ActivityIndicator accessibilityLabel="国一覧を読み込み中" color={colors.tabActive} />
-      </View>
-    );
-  }
-
-  if (state.status === 'error') {
-    return (
-      <View style={[styles.screen, styles.centered]}>
-        <Text accessibilityRole="alert" style={styles.errorText}>
-          国一覧を取得できませんでした。バックエンドの接続を確認してください。
-        </Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            setState({ status: 'loading' });
-            setAttempt(value => value + 1);
-          }}
-          style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
-        >
-          <Text style={styles.retryButtonText}>再読み込み</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  const { data, usingCache } = state;
+  if (!data) return <View style={styles.screen} />;
 
   // 2列のカードの幅 =（画面の幅 − 左右の余白 − カードの間のすき間）÷ 2
   const shopCardWidth = (width - spacing.screen * 2 - GRID_GAP) / 2;
-
-  const openCountry = (country: Country) => {
-    const countryCode = country.id.toUpperCase();
-    if (countryCode === 'JP') {
-      router.navigate('/search/prefectures');
-      return;
-    }
-    router.navigate({ pathname: '/search/results', params: { country: countryCode } });
-  };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <FeaturedBanner title="おすすめの国特集" items={data.featured} />
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.navigate('/search')}
-        style={({ pressed }) => [styles.searchButton, pressed && styles.pressed]}
-      >
-        <Text style={styles.searchButtonText}>近くのお店を探す</Text>
-      </Pressable>
-
-      {usingCache && <Text accessibilityRole="alert" style={styles.cacheNotice}>保存済みの一覧を表示しています。</Text>}
-
-      <View style={styles.sectionHeader}>
+      <View style={styles.firstSectionHeader}>
         <SectionHeader
           title="国名から選ぶ"
-          onPressMore={() => router.navigate('/search')}
+          onPressMore={() => router.push('/countries')}
         />
       </View>
       <FlatList
         data={data.countries}
-        keyExtractor={country => country.id}
+        keyExtractor={country => country.code}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.countryList}
-        renderItem={({ item }) => <CountryCard country={item} onPress={openCountry} />}
+        renderItem={({ item }) => (
+          <CountryCard country={item} width={COUNTRY_CARD_WIDTH} onPress={country => router.push(`/shops/${country.code}`)} />
+        )}
       />
 
-      <View style={[styles.sectionHeader, styles.visitedHeader]}>
-        <SectionHeader title="今まで訪れたお店" onPressMore={() => router.navigate('/map')} />
+      <View style={styles.sectionHeader}>
+        <SectionHeader title="今まで訪れたお店" />
       </View>
       <View style={styles.shopGrid}>
-        {data.visitedShops.map(shop => (
+        {visitedShops.length === 0 && (
+          <Text style={styles.empty}>まだ記録はありません。予約したお店で写真を撮ると、ここに並びます。</Text>
+        )}
+        {visitedShops.map(shop => (
           <VisitedShopCard
             key={shop.id}
             shop={shop}
-            country={findCountry(data.countries, shop.countryId)}
+            country={findCountry(shop.countryCode)}
             width={shopCardWidth}
-            onPress={selectedShop => router.navigate({ pathname: '/visits/[id]', params: { id: selectedShop.id } })}
           />
         ))}
       </View>
@@ -159,78 +95,33 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-    padding: spacing.screen,
-  },
-  errorText: {
-    ...fonts.body,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  retryButton: {
-    minHeight: 48,
-    borderRadius: radius.sm,
-    backgroundColor: colors.tabActive,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  retryButtonText: {
-    ...fonts.body,
-    color: colors.textOnDark,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
   content: {
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
   },
-  searchButton: {
-    minHeight: 54,
-    marginHorizontal: spacing.screen,
+  // 余白はすべて8の倍数（theme.ts の spacing）です
+  firstSectionHeader: {
     marginTop: spacing.lg,
-    borderRadius: radius.sm,
-    backgroundColor: colors.tabActive,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-  },
-  searchButtonText: {
-    ...fonts.body,
-    color: colors.textOnDark,
-    fontWeight: '700',
-  },
-  cacheNotice: {
-    color: '#66582f',
-    backgroundColor: '#fff4d6',
-    marginHorizontal: spacing.screen,
-    marginTop: spacing.sm,
-    borderRadius: radius.sm,
-    padding: spacing.sm,
-    textAlign: 'center',
-    fontSize: 12,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.screen,
   },
   sectionHeader: {
-    marginTop: 13,
-    marginBottom: 16,
-  },
-  visitedHeader: {
-    marginTop: 21,
-    marginBottom: 21,
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.screen,
   },
   countryList: {
     paddingHorizontal: spacing.screen,
-    gap: 14,
+    gap: spacing.md,
+  },
+  empty: {
+    ...fonts.body,
+    color: colors.textSecondary,
   },
   shopGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: spacing.screen,
     columnGap: GRID_GAP,
-    rowGap: 17,
+    rowGap: spacing.lg,
   },
 });

@@ -44,7 +44,7 @@ export function VisitDetailScreen() {
   if (state.status === 'loading') {
     return (
       <SafeAreaView edges={[]} style={[styles.safeArea, styles.centered]}>
-        <ActivityIndicator accessibilityLabel="訪問記録を読み込み中" color={colors.tabActive} />
+        <ActivityIndicator accessibilityLabel="訪問記録を読み込み中" color={colors.primary} />
       </SafeAreaView>
     );
   }
@@ -118,6 +118,6 @@ const styles = StyleSheet.create({
   empty: { color: '#66736f', fontSize: 14 },
   detail: { color: '#52645f', fontSize: 14, lineHeight: 21 },
   error: { color: '#b33030', lineHeight: 22, textAlign: 'center' },
-  backButton: { minHeight: 48, minWidth: 120, borderRadius: radius.sm, backgroundColor: colors.tabActive, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.md },
-  backButtonText: { color: colors.textOnDark, fontWeight: '700' },
+  backButton: { minHeight: 48, minWidth: 120, borderRadius: radius.sm, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.md },
+  backButtonText: { color: colors.onPrimary, fontWeight: '700' },
 });

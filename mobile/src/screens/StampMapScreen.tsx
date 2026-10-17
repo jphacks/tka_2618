@@ -101,7 +101,7 @@ export function StampMapScreen() {
           ))}
         </View>
 
-        {loading ? <ActivityIndicator accessibilityLabel="訪問記録を読み込み中" color={colors.tabActive} /> : error ? (
+        {loading ? <ActivityIndicator accessibilityLabel="訪問記録を読み込み中" color={colors.primary} /> : error ? (
           <View style={styles.notice}><Text accessibilityRole="alert" style={styles.error}>{error}</Text><Pressable accessibilityRole="button" onPress={() => setAttempt(value => value + 1)} style={styles.retry}><Text>再読み込み</Text></Pressable></View>
         ) : (
           <>

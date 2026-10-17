@@ -126,7 +126,7 @@ export function VisitEntryScreen() {
         </View>
 
         {message && <Text accessibilityRole={isError ? 'alert' : undefined} style={isError ? styles.error : styles.status}>{message}</Text>}
-        {busy && <ActivityIndicator color={colors.tabActive} />}
+        {busy && <ActivityIndicator color={colors.primary} />}
 
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void verifyLocation()} style={({ pressed }) => [styles.primaryButton, busy && styles.disabled, pressed && styles.pressed]}>
           <Text style={styles.primaryText}>現在地で訪問確認する</Text>
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
   memoHeader: { flexDirection: 'row', justifyContent: 'space-between' },
   counter: { color: '#66736f', fontSize: 13 },
   input: { minHeight: 132, borderWidth: 1, borderColor: '#cbd3d0', borderRadius: radius.sm, padding: 14, fontSize: 15, textAlignVertical: 'top', color: colors.text },
-  primaryButton: { minHeight: 54, borderRadius: radius.sm, backgroundColor: colors.tabActive, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
-  primaryText: { color: colors.textOnDark, fontSize: 16, fontWeight: '700' },
+  primaryButton: { minHeight: 54, borderRadius: radius.sm, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  primaryText: { color: colors.onPrimary, fontSize: 16, fontWeight: '700' },
   secondaryButton: { minHeight: 52, borderRadius: radius.sm, borderWidth: 1, borderColor: '#aeb8b4', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   secondaryText: { color: colors.text, fontSize: 15, fontWeight: '700' },
   status: { color: '#17613d', textAlign: 'center' },

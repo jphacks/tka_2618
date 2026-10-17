@@ -1,214 +1,137 @@
-import { useEffect, useState } from 'react';
-import * as Location from 'expo-location';
-import { router, useLocalSearchParams } from 'expo-router';
-import { searchApi, type SearchCountry, type Prefecture } from '../data/searchApi';
-import type { Restaurant } from '../data/visitTypes';
-import {
-  ActivityIndicator,
-  Image,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// 地図タブです（Figma の「地図」）。世界地図と日本地図を切り替えられます。
+//
+// ※ 地図は見た目だけの仮実装です。世界地図の代わりに12か国を並べ、
+//    食べた（写真を記録した）国を黒く塗っています。
+//    あとで本物の地図（SVG の世界地図・日本地図など）に置き換えます。
 
-import RestaurantMap from '../../RestaurantMap';
-import { colors, spacing } from '../constants/theme';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Header } from '../components/Header';
+import { SegmentedControl } from '../components/SegmentedControl';
+import { colors, fonts, radius, spacing } from '../constants/theme';
+import { useAppData } from '../data/AppDataContext';
+import { dummyCountries } from '../data/dummy';
 
-type SearchState = 'locating' | 'searching' | 'success' | 'error';
-type SearchResult = { restaurants: Restaurant[]; cuisine_name: string; search_keyword: string };
+type MapType = 'world' | 'japan';
 
 export function MapScreen() {
-  const params = useLocalSearchParams<{ country?: string | string[]; region?: string | string[] }>();
-  const country = typeof params.country === 'string' ? params.country.toUpperCase() : '';
-  const region = typeof params.region === 'string' ? params.region.toUpperCase() : '';
-  return <SearchResults key={`${country}:${region}`} country={country} region={region} />;
-}
-
-function SearchResults({ country, region }: { country: string; region: string }) {
-  const [title, setTitle] = useState('近くのお店');
-  const [keyword, setKeyword] = useState('');
-  const [searchState, setSearchState] = useState<SearchState>('locating');
-  const [searchMessage, setSearchMessage] = useState('');
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [searchCenter, setSearchCenter] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    let active = true;
-    const timeout = setTimeout(() => {
-      if (!active) return;
-      active = false;
-      controller.abort();
-      setSearchState('error');
-      setSearchMessage('検索に時間がかかっています。位置情報と通信環境を確認して、もう一度お試しください。');
-    }, 30000);
-
-    async function search() {
-      try {
-        // URLを直接開いた場合も、対応する国・都道府県か確認してから位置情報を取得する。
-        const catalog = await searchApi<{ countries: SearchCountry[] }>('/api/countries', controller.signal);
-        const selected = catalog.countries.find(item => item.code === country && item.cuisine_supported);
-        if (!selected || (region && country !== 'JP')) throw new Error('国を選び直してください。');
-        let name = `${selected.name_ja}の料理`;
-        if (country === 'JP') {
-          if (!region) throw new Error('日本の料理は都道府県を選んでください。');
-          const catalog = await searchApi<{ regions: Prefecture[] }>('/api/countries/JP/regions', controller.signal);
-          const selectedRegion = catalog.regions.find(item => item.code === region);
-          if (!selectedRegion) throw new Error('都道府県を選び直してください。');
-          name = `${selectedRegion.name_ja}の郷土料理`;
-        }
-        if (!active) return;
-        setTitle(name);
-        const permission = await Location.requestForegroundPermissionsAsync();
-        if (!active) return;
-        if (permission.status !== 'granted') throw new Error('近くのお店を探すには、ブラウザまたは端末の設定で位置情報の利用を許可してください。');
-        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        if (!active) return;
-        const center = { latitude: location.coords.latitude, longitude: location.coords.longitude };
-        setSearchCenter(center);
-        setSearchState('searching');
-        const query = new URLSearchParams({ country_code: country, lat: String(center.latitude), lng: String(center.longitude), count: '30' });
-        if (region) query.set('region_code', region);
-        const result = await searchApi<SearchResult>(`/api/restaurants/nearby?${query}`, controller.signal);
-        if (!Array.isArray(result.restaurants)) throw new Error('店舗検索のレスポンスが不正です。');
-        if (!active) return;
-        setRestaurants(result.restaurants);
-        setKeyword(result.search_keyword);
-        setTitle(result.cuisine_name);
-        setSearchState('success');
-      } catch (error) {
-        if (active) {
-          setSearchMessage(error instanceof Error ? error.message : '店舗を検索できませんでした。');
-          setSearchState('error');
-        }
-      } finally {
-        clearTimeout(timeout);
-      }
-    }
-    void search();
-    return () => { active = false; clearTimeout(timeout); controller.abort(); };
-  }, [country, region, attempt]);
-
-  const searching = searchState === 'locating' || searchState === 'searching';
+  const { visitedCountryCodes, visitedShops } = useAppData();
+  const [mapType, setMapType] = useState<MapType>('world');
 
   return (
-    <SafeAreaView edges={[]} style={styles.safeArea}>
+    <View style={styles.screen}>
+      <Header title="地図" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace(country === 'JP' ? '/search/prefectures' : '/search')}>
-          <Text style={styles.link}>‹ 選び直す</Text>
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-        <Text style={styles.intro}>現在地から3km以内のお店を探します。</Text>
-        {keyword ? <Text style={styles.meta}>検索キーワード：{keyword}</Text> : null}
-        {region && <Text style={styles.meta}>料理名のキーワード検索です。お店の掲載情報によって、該当しない場合があります。</Text>}
-        {searching && <ActivityIndicator color={colors.tabActive} style={styles.loader} />}
-        {!searching && <Pressable accessibilityRole="button" onPress={() => {
-          setSearchState('locating'); setSearchMessage(''); setRestaurants([]);
-          setSearchCenter(null); setKeyword(''); setAttempt(value => value + 1);
-        }} style={styles.searchButton}>
-          <Text style={styles.searchButtonText}>{searchState === 'error' ? 'もう一度試す' : '現在地で再検索'}</Text>
-        </Pressable>}
-        {searching && <Text style={styles.statusText}>{searchState === 'locating' ? '現在地を取得しています…' : 'お店を検索しています…'}</Text>}
-        {searchState === 'error' && <Text style={styles.error}>{searchMessage}</Text>}
-        {searchState === 'success' && restaurants.length === 0 && (
-          <Text style={styles.empty}>3km以内に該当するお店が見つかりませんでした。</Text>
-        )}
+        <SegmentedControl
+          options={[
+            { value: 'world', label: '世界地図' },
+            { value: 'japan', label: '日本地図' },
+          ]}
+          value={mapType}
+          onChange={setMapType}
+        />
 
-        {searchCenter && (
-          <View style={styles.mapSection}>
-            <Text accessibilityRole="header" style={styles.sectionTitle}>地図</Text>
-            <RestaurantMap key={`${searchCenter.latitude}:${searchCenter.longitude}:${searchState}`} center={searchCenter} restaurants={restaurants} />
-          </View>
-        )}
-
-        {restaurants.length > 0 && (
-          <View style={styles.results}>
-            <Text accessibilityRole="header" style={styles.sectionTitle}>{restaurants.length}件のお店</Text>
-            {restaurants.map(restaurant => (
-              <View key={restaurant.id} style={styles.restaurantCard}>
-                {restaurant.image_url && <Image source={{ uri: restaurant.image_url }} style={styles.restaurantImage} />}
-                <View style={styles.restaurantBody}>
-                  <Text style={styles.distance}>{restaurant.distance_m.toLocaleString()}m</Text>
-                  <Text style={styles.restaurantName}>{restaurant.name}</Text>
-                  {restaurant.genre && <Text style={styles.meta}>{restaurant.genre}</Text>}
-                  {restaurant.address && <Text style={styles.meta}>{restaurant.address}</Text>}
-                  {restaurant.detail_url && (
-                    <Pressable onPress={() => void Linking.openURL(restaurant.detail_url as string)}>
-                      <Text style={styles.link}>店舗詳細を見る</Text>
-                    </Pressable>
-                  )}
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => router.push({
-                      pathname: '/search/visit',
-                      params: {
-                        shopId: restaurant.id,
-                        shopName: restaurant.name,
-                        latitude: String(restaurant.lat),
-                        longitude: String(restaurant.lng),
-                        country,
-                        ...(region ? { region } : {}),
-                        ...(restaurant.address ? { address: restaurant.address } : {}),
-                        ...(restaurant.image_url ? { imageUrl: restaurant.image_url } : {}),
-                      },
-                    })}
-                    style={({ pressed }) => [styles.visitButton, pressed && styles.pressed]}
+        {mapType === 'world' ? (
+          <View style={styles.mapArea}>
+            <Text style={styles.mapNote}>世界地図（仮）：食べた国が塗られます</Text>
+            <Text style={styles.count}>
+              食べた国 {visitedCountryCodes.size} / {dummyCountries.length}
+            </Text>
+            <View style={styles.countryGrid}>
+              {dummyCountries.map(country => {
+                const visited = visitedCountryCodes.has(country.code);
+                return (
+                  <View
+                    key={country.code}
+                    accessibilityLabel={`${country.name}${visited ? '（食べた）' : ''}`}
+                    style={[styles.countryTile, visited ? styles.tileVisited : styles.tileNotVisited]}
                   >
-                    <Text style={styles.visitButtonText}>行った！記録を残す</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ))}
+                    <Text style={styles.tileFlag}>{country.flag}</Text>
+                    <Text style={[styles.tileName, visited && styles.tileNameVisited]}>{country.name}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.mapArea, styles.japanArea]}>
+            <Text style={styles.mapNote}>日本地図（仮）</Text>
+            <Text style={styles.count}>記録したお店 {visitedShops.length} 件</Text>
+            <Text style={styles.japanNote}>食べたお店がある都道府県が塗られる予定です</Text>
           </View>
         )}
-
-        <Pressable
-          accessibilityRole="link"
-          onPress={() => void Linking.openURL('https://webservice.recruit.co.jp/')}
-          style={styles.credit}
-        >
-          <Image
-            accessibilityLabel="ホットペッパーグルメ Webサービス"
-            source={{ uri: 'https://webservice.recruit.co.jp/banner/hotpepper-s.gif' }}
-            style={styles.creditImage}
-          />
-        </Pressable>
-        <Text style={styles.privacy}>現在地は検索時だけ使用し、保存しません。</Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  content: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: spacing.screen, paddingBottom: spacing.lg },
-  title: { color: colors.text, fontSize: 32, fontWeight: '700', marginTop: 12 },
-  intro: { color: '#52645f', fontSize: 16, lineHeight: 25, marginTop: 12 },
-  loader: { marginTop: 40 },
-  sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 30, marginBottom: 14 },
-  searchButton: { backgroundColor: colors.tabActive, minHeight: 52, borderRadius: 12, marginTop: 24, padding: 14, alignItems: 'center', justifyContent: 'center' },
-  searchButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  statusText: { color: '#52645f', textAlign: 'center', marginTop: 12 },
-  error: { color: '#b33030', fontSize: 15, lineHeight: 23, marginTop: 12 },
-  empty: { color: '#52645f', backgroundColor: '#fff', borderRadius: 12, padding: 18, marginTop: 20 },
-  results: { marginTop: 4 },
-  mapSection: { marginTop: 4 },
-  restaurantCard: { backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: '#dce5df' },
-  restaurantImage: { width: '100%', height: 180, backgroundColor: '#e4e9e6' },
-  restaurantBody: { padding: 16 },
-  distance: { alignSelf: 'flex-start', color: '#17613d', backgroundColor: '#e8f4ed', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, fontSize: 13, fontWeight: '700' },
-  restaurantName: { color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10 },
-  meta: { color: '#52645f', fontSize: 14, lineHeight: 21, marginTop: 5 },
-  link: { color: '#17613d', fontSize: 15, fontWeight: '700', marginTop: 12 },
-  visitButton: { minHeight: 50, borderRadius: 12, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center', marginTop: 16, paddingHorizontal: 14 },
-  visitButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  pressed: { opacity: 0.65 },
-  credit: { alignSelf: 'flex-start', marginTop: 18, paddingVertical: 8 },
-  creditImage: { width: 135, height: 17 },
-  privacy: { color: '#6f7d79', fontSize: 12, marginTop: 8 },
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    flexGrow: 1,
+    padding: spacing.screen,
+    gap: spacing.md,
+  },
+  mapArea: {
+    flexGrow: 1,
+    padding: spacing.md,
+    gap: spacing.sm,
+    borderRadius: radius.lg,
+    backgroundColor: colors.imagePlaceholder,
+  },
+  japanArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 400,
+  },
+  mapNote: {
+    ...fonts.bodyBold,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  count: {
+    ...fonts.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  japanNote: {
+    ...fonts.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  countryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  countryTile: {
+    // 3列で並べます
+    flexBasis: '30%',
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+  },
+  tileVisited: {
+    backgroundColor: colors.visited,
+  },
+  tileNotVisited: {
+    backgroundColor: colors.background,
+  },
+  tileFlag: {
+    fontSize: 24,
+    lineHeight: 32,
+  },
+  tileName: {
+    ...fonts.caption,
+    color: colors.textSecondary,
+  },
+  tileNameVisited: {
+    color: colors.onPrimary,
+    fontWeight: '700',
+  },
 });
