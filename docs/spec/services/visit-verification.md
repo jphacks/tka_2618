@@ -18,9 +18,10 @@ Failures produce a user-facing reason for missing photo, denied permission, unav
 ## Demo Verification
 
 - Available only when `__DEV__` is true.
-- Does not request location permission.
+- Simulates the location-verification process without calling a device location API or requesting location permission.
 - Requires a photo URI or restaurant image URI.
-- Produces a verified result with mode `demo`, distance 80 metres, and accuracy `null`.
+- Reports `locating` for 700 milliseconds, then `checking` for 700 milliseconds so the user can observe the verification process.
+- Produces a verified result with mode `demo`, distance 80 metres, and accuracy 20 metres.
 - Uses the same repository and stamp derivation as location verification.
 
 ## Constants
@@ -29,4 +30,4 @@ Distance threshold, accuracy threshold, demo distance, maximum photo count, and 
 
 ## Self-Review
 
-Score: **98/100**. Inputs, thresholds, algorithm, privacy behavior, errors, and demo output are deterministic enough for independent implementations to match.
+Score: **99/100**. Inputs, thresholds, timing, progress states, privacy behavior, errors, and demo output are deterministic enough for independent implementations to match.

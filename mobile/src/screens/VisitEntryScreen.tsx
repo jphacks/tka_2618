@@ -11,7 +11,7 @@ import { DEMO_VISIT_PHOTO_URI } from '../data/demoVisits';
 import type { VisitRecord, VisitVerification } from '../data/visitTypes';
 import { saveVisit } from '../repositories/visitRepository';
 import { captureVisitPhoto } from '../services/visitPhotos';
-import { createDemoVerification, verifyCurrentVisit } from '../services/visitVerification';
+import { verifyCurrentVisit, verifyDemoVisit, type DemoVerificationStep } from '../services/visitVerification';
 import { useDemoMode } from '../providers/DemoModeProvider';
 
 type VisitParams = {
@@ -101,9 +101,14 @@ export function VisitEntryScreen() {
     const photos = photoUris.length > 0
       ? photoUris
       : [shop.imageUrl ?? DEMO_VISIT_PHOTO_URI];
-    const result = createDemoVerification(photos.length > 0);
-    if (!result.ok) { setIsError(true); setMessage(result.message); return; }
-    setBusy(true); setMessage('デモ訪問を保存しています…'); setIsError(false);
+    const progressMessages: Record<DemoVerificationStep, string> = {
+      locating: '現在地を取得しています…',
+      checking: '店舗との距離を確認しています…',
+    };
+    setBusy(true); setIsError(false);
+    const result = await verifyDemoVisit(photos.length > 0, step => setMessage(progressMessages[step]));
+    if (!result.ok) { setBusy(false); setIsError(true); setMessage(result.message); return; }
+    setMessage('訪問記録を保存しています…');
     try {
       await persist(result.verification, photos);
     } catch {
@@ -154,10 +159,10 @@ export function VisitEntryScreen() {
         </Pressable>}
         {demoMode.enabled && (
           <Pressable accessibilityRole="button" disabled={busy} onPress={() => void verifyDemo()} style={({ pressed }) => [styles.demoButton, busy && styles.disabled, pressed && styles.pressed]}>
-            <Text style={styles.demoText}>デモで訪問確認する</Text>
+            <Text style={styles.demoText}>現在地を取得して訪問登録する</Text>
           </Pressable>
         )}
-        <Text style={styles.privacy}>{demoMode.enabled ? 'デモでは現在地・カメラ・店舗APIを使用しません。' : '現在地の緯度・経度は保存しません。確認結果と店舗までの距離だけを保存します。'}</Text>
+        <Text style={styles.privacy}>{demoMode.enabled ? 'デモでは実際の位置情報を取得せず、現在地確認から訪問登録までの流れを再現します。' : '現在地の緯度・経度は保存しません。確認結果と店舗までの距離だけを保存します。'}</Text>
       </ScrollView>
     </SafeAreaView>
   );
