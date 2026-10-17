@@ -51,6 +51,15 @@ def _build_country_catalog() -> CountryListResponse:
     if not isinstance(settings, dict):
         raise ValueError("countries.json must contain an object")
 
+    member_codes_source = _load_json("un_member_country_codes.json")
+    if not isinstance(member_codes_source, list) or not all(
+        isinstance(code, str) for code in member_codes_source
+    ):
+        raise ValueError("un_member_country_codes.json must contain a string array")
+    member_codes = set(member_codes_source)
+    if len(member_codes) != 193:
+        raise ValueError("UN member country codes must contain 193 unique entries")
+
     default_country = settings.get("default_country")
     country_settings = settings.get("settings", {})
     if not isinstance(country_settings, dict):
@@ -65,6 +74,8 @@ def _build_country_catalog() -> CountryListResponse:
     countries = []
     for source in pycountry.countries:
         code = source.alpha_2
+        if code not in member_codes:
+            continue
         overrides = country_settings.get(code, {})
         countries.append(
             Country(
@@ -78,6 +89,8 @@ def _build_country_catalog() -> CountryListResponse:
         )
 
     countries.sort(key=lambda country: (country.code != default_country, country.name_ja))
+    if len(countries) != len(member_codes):
+        raise ValueError("Some UN member country codes are missing from ISO 3166 data")
     return CountryListResponse(
         default_country=default_country,
         countries=countries,

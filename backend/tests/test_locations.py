@@ -11,8 +11,8 @@ def test_list_countries():
     assert response.status_code == 200
     payload = response.json()
     assert payload["default_country"] == "JP"
-    assert len(payload["countries"]) == 249
-    assert len({country["code"] for country in payload["countries"]}) == 249
+    assert len(payload["countries"]) == 193
+    assert len({country["code"] for country in payload["countries"]}) == 193
     assert payload["countries"][0] == {
         "code": "JP",
         "name_ja": "日本",
@@ -22,6 +22,9 @@ def test_list_countries():
         "has_regions": True,
     }
     assert {"KR", "US", "FR", "BR", "AU"}.issubset(
+        {country["code"] for country in payload["countries"]}
+    )
+    assert {"VA", "PS", "HK", "AQ"}.isdisjoint(
         {country["code"] for country in payload["countries"]}
     )
     assert [country["code"] for country in payload["countries"] if country["supported"]] == ["JP"]

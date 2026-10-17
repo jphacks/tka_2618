@@ -213,7 +213,7 @@ curl http://localhost:8001/api/countries
 curl http://localhost:8001/api/countries/JP/regions
 ```
 
-国一覧はISO 3166に基づく249の国・地域を日本語名・英語名・国旗付きで返します。
+国一覧は国連加盟193か国を日本語名・英語名・ISO 3166国コード・国旗付きで返します。
 `supported` は現在サービスを提供できるか、`has_regions` は地域一覧を取得できるかを表します。現在の対応国は日本です。
 
 ## アプリ（React Native / Expo）
