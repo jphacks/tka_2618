@@ -6,6 +6,8 @@ export default function MapLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="prefectures" options={{ title: '都道府県を選ぶ' }} />
       <Stack.Screen name="results" options={{ title: '近くのお店' }} />
+      <Stack.Screen name="visit" options={{ title: '訪問記録' }} />
+      <Stack.Screen name="stamps" options={{ title: 'スタンプ地図' }} />
     </Stack>
   );
 }

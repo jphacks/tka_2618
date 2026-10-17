@@ -1,8 +1,8 @@
 // ホーム画面がデータを受け取る「窓口」です。
-// 国一覧はバックエンドを正として取得し、APIがまだない特集と訪問履歴は
-// 表示確認用のデータを使用します。
+// 国一覧はバックエンドを正として取得し、訪問履歴は端末内の記録を使用します。
 
-import { dummyFeatured, dummyVisitedShops } from './dummy';
+import { listVisits } from '../repositories/visitRepository';
+import { dummyFeatured } from './dummy';
 import { searchApi, type SearchCountry } from './searchApi';
 import type { Country, HomeData } from './types';
 
@@ -11,7 +11,10 @@ type CountryListResponse = {
 };
 
 export async function getHomeData(signal: AbortSignal): Promise<HomeData> {
-  const response = await searchApi<CountryListResponse>('/api/countries', signal);
+  const [response, visits] = await Promise.all([
+    searchApi<CountryListResponse>('/api/countries', signal),
+    listVisits().catch(() => []),
+  ]);
   return {
     featured: dummyFeatured,
     countries: response.countries
@@ -21,7 +24,14 @@ export async function getHomeData(signal: AbortSignal): Promise<HomeData> {
         name: country.name_ja,
         flag: country.flag,
       })),
-    visitedShops: dummyVisitedShops,
+    visitedShops: visits.map(visit => ({
+      id: visit.id,
+      name: visit.shopName,
+      countryId: visit.countryCode.toLowerCase(),
+      visitedAt: visit.visitedAt.slice(0, 10),
+      imageUrl: visit.photoUris[0],
+      verificationMode: visit.verification.mode,
+    })),
   };
 }
 

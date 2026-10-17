@@ -32,7 +32,15 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "現在地から3km以内の飲食店を検索するために位置情報を使用します。"
+          "locationWhenInUsePermission": "近くの飲食店の検索と、店舗での訪問確認のために位置情報を使用します。"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "店舗での訪問写真を撮影するためにカメラを使用します。",
+          "photosPermission": "訪問記録に写真を追加するために写真を使用します。",
+          "microphonePermission": false
         }
       ]
     ],

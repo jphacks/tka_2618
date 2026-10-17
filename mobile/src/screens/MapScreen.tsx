@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
 import { searchApi, type SearchCountry, type Prefecture } from '../data/searchApi';
+import type { Restaurant } from '../data/visitTypes';
 import {
   ActivityIndicator,
   Image,
@@ -16,18 +17,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import RestaurantMap from '../../RestaurantMap';
 import { colors, spacing } from '../constants/theme';
-
-type Restaurant = {
-  id: string;
-  name: string;
-  distance_m: number;
-  address: string | null;
-  lat: number;
-  lng: number;
-  genre: string | null;
-  image_url: string | null;
-  detail_url: string | null;
-};
 
 type SearchState = 'locating' | 'searching' | 'success' | 'error';
 type SearchResult = { restaurants: Restaurant[]; cuisine_name: string; search_keyword: string };
@@ -153,6 +142,25 @@ function SearchResults({ country, region }: { country: string; region: string })
                       <Text style={styles.link}>店舗詳細を見る</Text>
                     </Pressable>
                   )}
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => router.push({
+                      pathname: '/map/visit',
+                      params: {
+                        shopId: restaurant.id,
+                        shopName: restaurant.name,
+                        latitude: String(restaurant.lat),
+                        longitude: String(restaurant.lng),
+                        country,
+                        ...(region ? { region } : {}),
+                        ...(restaurant.address ? { address: restaurant.address } : {}),
+                        ...(restaurant.image_url ? { imageUrl: restaurant.image_url } : {}),
+                      },
+                    })}
+                    style={({ pressed }) => [styles.visitButton, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.visitButtonText}>行った！記録を残す</Text>
+                  </Pressable>
                 </View>
               </View>
             ))}
@@ -197,6 +205,9 @@ const styles = StyleSheet.create({
   restaurantName: { color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 10 },
   meta: { color: '#52645f', fontSize: 14, lineHeight: 21, marginTop: 5 },
   link: { color: '#17613d', fontSize: 15, fontWeight: '700', marginTop: 12 },
+  visitButton: { minHeight: 50, borderRadius: 12, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center', marginTop: 16, paddingHorizontal: 14 },
+  visitButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  pressed: { opacity: 0.65 },
   credit: { alignSelf: 'flex-start', marginTop: 18, paddingVertical: 8 },
   creditImage: { width: 135, height: 17 },
   privacy: { color: '#6f7d79', fontSize: 12, marginTop: 8 },

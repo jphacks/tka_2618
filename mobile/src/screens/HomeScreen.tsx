@@ -1,7 +1,7 @@
 // ホーム画面（Figma の「home」）です。
 // 上から「おすすめの国特集」「国名から選ぶ」「今まで訪れたお店」の順に並びます。
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
@@ -26,7 +26,8 @@ export function HomeScreen() {
   const [state, setState] = useState<HomeState>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
+    void attempt;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), HOME_LOAD_TIMEOUT_MS);
     let active = true;
@@ -48,7 +49,7 @@ export function HomeScreen() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [attempt]);
+  }, [attempt]));
 
   // バナーが暗い色なので、ホームを表示している間だけ時計などの文字を白にします
   useFocusEffect(
@@ -120,7 +121,7 @@ export function HomeScreen() {
       />
 
       <View style={[styles.sectionHeader, styles.visitedHeader]}>
-        <SectionHeader title="今まで訪れたお店" />
+        <SectionHeader title="今まで訪れたお店" onPressMore={() => router.navigate('/map/stamps')} />
       </View>
       <View style={styles.shopGrid}>
         {data.visitedShops.map(shop => (

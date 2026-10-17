@@ -7,10 +7,10 @@ The home screen currently displays hard-coded countries, and its country cards a
 ## Scope
 
 - Replace the home screen's country fixture with the existing `GET /api/countries` response.
-- Preserve the current featured banners and visited-shop fixtures.
+- Preserve the current featured banners and replace the visited-shop fixture with local visit records.
 - Connect country cards and the country section arrow to existing Expo Router routes.
 - Add deterministic loading, error, and retry states.
-- Do not change the featured banner interaction, visited-shop interaction, map search behavior, or backend API.
+- Do not change the featured banner interaction, map search behavior, or backend API.
 
 ## Data Requirements
 
@@ -32,6 +32,8 @@ The request must:
 - Abort after 15 seconds.
 - Ignore completion after the component unmounts or a newer attempt replaces it.
 - Never read local `.env` files. The existing API client may use environment variables already loaded by the runtime.
+
+Load visit records from the local visit repository at the same time as the country request. Map each record to a visited-shop card using its first photo, cuisine-origin country code, restaurant name, visit date, and verification mode. Repository failure must not prevent the country catalog from loading.
 
 ## Screen States
 
@@ -55,7 +57,7 @@ Keep the existing visual order:
 1. Featured-country banner
 2. `国名から選ぶ` section header
 3. Horizontal country-card list
-4. `今まで訪れたお店` section
+4. `今まで訪れたお店` section populated newest first from local visit records
 
 ## Navigation
 
@@ -66,6 +68,7 @@ Use Expo Router's existing absolute routes.
 | `国名から選ぶ` arrow | `/map` |
 | Japan card (`JP`) | `/map/prefectures` |
 | Any other supported country card | `/map/results?country=<uppercase ISO code>` |
+| `今まで訪れたお店` arrow | `/map/stamps` |
 
 Use the existing `SectionHeader` and `CountryCard` callback props. Do not duplicate either component or restaurant-search logic.
 
@@ -80,7 +83,7 @@ Use the existing `SectionHeader` and `CountryCard` callback props. Do not duplic
 
 The backend country catalog is the source of truth for search support. Reusing it prevents the home screen from showing a country that the search endpoint cannot handle. Navigation goes directly to the existing map-tab routes so location permission, validation, and restaurant fetching remain centralized in the current search screens.
 
-Featured and visited content remains fixture-backed because no backend contract exists for those sections. Keeping them unchanged limits this implementation to a complete, reviewable country-navigation feature.
+Featured content remains fixture-backed because no backend contract exists for it. Visit content uses the local repository so a newly registered visit appears on the home screen without requiring an account or backend write API.
 
 ## Verification
 
