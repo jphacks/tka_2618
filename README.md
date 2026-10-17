@@ -177,3 +177,42 @@ npm run dev
 ```
 
 参考: [FastAPI の Docker 構成](https://fastapi.tiangolo.com/deployment/docker/)、[Vite の開発環境](https://vite.dev/guide/)。
+
+### ホットペッパーグルメAPI
+
+[リクルートWEBサービスのAPIキー発行ページ](https://webservice.recruit.co.jp/register)で登録し、自分のAPIキーを取得してください。
+取得したキーはリポジトリ直下の `.env` に設定します。`.env` がない場合のみ `.env.example` をコピーして作成してください。
+
+```dotenv
+FRONTEND_PORT=5173
+BACKEND_PORT=8000
+HOTPEPPER_API_KEY=取得したAPIキー
+```
+
+`.env` は Git の管理対象外です。実際のキーを `.env.example` に書いたり、React のコードや `VITE_` 付きの環境変数に設定したりしないでください。
+Docker Compose がキーをバックエンドだけに渡します。変更後は次を実行して反映します。
+
+```bash
+docker compose up -d backend
+```
+
+http://localhost:8000/docs の `GET /api/restaurants` で検索できます。
+
+```bash
+curl --get 'http://localhost:8000/api/restaurants' \
+  --data-urlencode 'keyword=新宿 居酒屋' \
+  --data 'count=10' \
+  --data 'start=1'
+```
+
+- `keyword`: 必須の検索語句
+- `count`: 取得件数（1〜100、初期値10）
+- `start`: 取得開始位置（1以上、初期値1）
+- レスポンス: `results_available`（総件数）、`results_start`（開始位置）、`shops`（店舗一覧）
+
+React からは `/api/restaurants?keyword=...` を呼び出せます。APIキーをブラウザから送る必要はありません。
+キー未設定は503、外部APIのエラーは502、タイムアウトは504を返します。
+Dockerを使わない場合は、起動するシェルに `HOTPEPPER_API_KEY` を設定してください（ルートの `.env` は自動読込しません）。
+
+店舗情報を表示する画面を作成する際は、[公式のご利用案内](https://webservice.recruit.co.jp/doc/hotpepper/guideline.html)に従ってクレジットを表示してください。
+検索項目・店舗データの詳細は[APIリファレンス](https://webservice.recruit.co.jp/doc/hotpepper/reference.html)を参照してください。
