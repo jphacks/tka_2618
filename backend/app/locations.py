@@ -1,7 +1,9 @@
+import gettext
 import json
 from pathlib import Path
 from typing import Annotated
 
+import pycountry
 from fastapi import APIRouter, HTTPException, Path as ApiPath
 from pydantic import BaseModel, Field
 
@@ -40,7 +42,49 @@ def _load_json(filename: str) -> object:
         return json.load(source)
 
 
-country_catalog = CountryListResponse.model_validate(_load_json("countries.json"))
+def _flag_emoji(country_code: str) -> str:
+    return "".join(chr(ord(character) + 127397) for character in country_code)
+
+
+def _build_country_catalog() -> CountryListResponse:
+    settings = _load_json("countries.json")
+    if not isinstance(settings, dict):
+        raise ValueError("countries.json must contain an object")
+
+    default_country = settings.get("default_country")
+    country_settings = settings.get("settings", {})
+    if not isinstance(country_settings, dict):
+        raise ValueError("countries.json settings must contain an object")
+
+    japanese = gettext.translation(
+        "iso3166-1",
+        pycountry.LOCALES_DIR,
+        languages=["ja"],
+        fallback=True,
+    )
+    countries = []
+    for source in pycountry.countries:
+        code = source.alpha_2
+        overrides = country_settings.get(code, {})
+        countries.append(
+            Country(
+                code=code,
+                name_ja=japanese.gettext(source.name),
+                name_en=source.name,
+                flag=getattr(source, "flag", _flag_emoji(code)),
+                supported=bool(overrides.get("supported", False)),
+                has_regions=bool(overrides.get("has_regions", False)),
+            )
+        )
+
+    countries.sort(key=lambda country: (country.code != default_country, country.name_ja))
+    return CountryListResponse(
+        default_country=default_country,
+        countries=countries,
+    )
+
+
+country_catalog = _build_country_catalog()
 region_catalogs = {
     "JP": RegionListResponse.model_validate(_load_json("jp_prefectures.json")),
 }
