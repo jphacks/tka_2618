@@ -15,4 +15,5 @@ export type RestaurantMapProps = {
   restaurants: MapRestaurant[];
   selectedId?: string | null;
   onSelect?: (restaurant: MapRestaurant) => void;
+  fullScreen?: boolean;
 };

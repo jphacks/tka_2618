@@ -3,9 +3,9 @@ import { StyleSheet, View } from 'react-native';
 
 import type { RestaurantMapProps } from './RestaurantMap.types';
 
-export default function RestaurantMap({ center, restaurants, selectedId, onSelect }: RestaurantMapProps) {
+export default function RestaurantMap({ center, restaurants, selectedId, onSelect, fullScreen = false }: RestaurantMapProps) {
   return (
-    <View style={styles.frame}>
+    <View style={[styles.frame, fullScreen && styles.fullScreen]}>
       <MapView
         initialRegion={{
           ...center,
@@ -42,6 +42,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     height: 360,
     overflow: 'hidden',
+  },
+  fullScreen: {
+    flex: 1,
+    height: undefined,
+    borderRadius: 0,
   },
   map: {
     height: '100%',

@@ -10,18 +10,20 @@ Route: `/shops/[countryCode]`. `countryCode` must match one of the supported cui
 2. If granted, obtain one current position using `Location.Accuracy.Balanced`.
 3. Display `近くのお店を検索しています…` and call `/api/restaurants/nearby` with the selected uppercase country code, current latitude, current longitude, and `count=30`.
 4. Display the current position, the 3-kilometre search radius, and returned restaurants on the existing cross-platform restaurant map.
-5. Select the first result initially. Selecting a map marker updates the restaurant detail card.
+5. Do not select a restaurant initially. Selecting a map marker opens that restaurant's detail card over the bottom of the map.
 
 Do not persist, log, or place device latitude or longitude in navigation parameters.
 
 ## Success Layout
 
 - Existing header with `<料理名>のお店`
-- Result count and privacy note
-- Current-location map with restaurant markers
-- Selected restaurant name, distance, genre, address, image, and external detail link when each value is available
-- Reservation status for the selected restaurant
+- A current-location map that fills all space below the header
+- A compact result count, privacy note, and `現在地を再取得` action over the top of the map
+- No restaurant card until the user selects a marker
+- A dismissible bottom overlay containing the selected restaurant name, distance, genre, address, image, external detail link, and reservation status when each value is available
 - `3km以内に該当するお店が見つかりませんでした。` when the result is empty
+
+The map remains visible behind the selected restaurant overlay. The overlay may scroll vertically on a short screen and must leave device safe-area space below its actions.
 
 ## Reservation Status
 
@@ -41,4 +43,4 @@ Do not persist, log, or place device latitude or longitude in navigation paramet
 
 ## Self-Review
 
-Score: **99/100**. Route validation, permission timing, accuracy, API parameters, states, exact fallback copy, map content, selection, retry, cancellation, and privacy are explicit.
+Score: **99/100**. Route validation, permission timing, accuracy, API parameters, full-screen layout, initial selection, marker interaction, overlay contents, retry, cancellation, safe-area behavior, and privacy are explicit.

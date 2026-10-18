@@ -26,7 +26,7 @@ const selectedRestaurantIcon = divIcon({
   iconSize: [30, 30],
 });
 
-export default function RestaurantMap({ center, restaurants, selectedId, onSelect }: RestaurantMapProps) {
+export default function RestaurantMap({ center, restaurants, selectedId, onSelect, fullScreen = false }: RestaurantMapProps) {
   const centerPoint: [number, number] = [center.latitude, center.longitude];
   const points: [number, number][] = [
     centerPoint,
@@ -35,7 +35,7 @@ export default function RestaurantMap({ center, restaurants, selectedId, onSelec
   const bounds = latLngBounds(points);
 
   return (
-    <div className="restaurant-map-frame">
+    <div className={`restaurant-map-frame${fullScreen ? ' full-screen' : ''}`}>
       <MapContainer
         bounds={bounds}
         boundsOptions={{ padding: [36, 36], maxZoom: 14 }}

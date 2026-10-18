@@ -2,11 +2,12 @@ import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import RestaurantMap from '../../RestaurantMap';
 import { Button } from '../components/Button';
 import { Header } from '../components/Header';
-import { ExternalLinkIcon } from '../components/Icons';
+import { CloseIcon, ExternalLinkIcon } from '../components/Icons';
 import { colors, fonts, radius, spacing } from '../constants/theme';
 import { findCountry, getNearbyRestaurants } from '../data/api';
 import { useAppData } from '../data/AppDataContext';
@@ -26,6 +27,7 @@ export function ShopMapScreen() {
   const { countryCode } = useLocalSearchParams<{ countryCode: string }>();
   const country = findCountry(countryCode);
   const { reservations } = useAppData();
+  const insets = useSafeAreaInsets();
   const [state, setState] = useState<SearchState>({ status: 'locating' });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -58,7 +60,7 @@ export function ShopMapScreen() {
         setState({ status: 'searching' });
         const result = await getNearbyRestaurants(selectedCountry.code, center, controller.signal);
         if (!active) return;
-        setSelectedId(result.restaurants[0]?.id ?? null);
+        setSelectedId(null);
         setState({ status: 'success', center, restaurants: result.restaurants });
       } catch (error) {
         if (!active) return;
@@ -140,58 +142,85 @@ export function ShopMapScreen() {
           <Button title="もう一度試す" onPress={retry} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.resultHeader}>
-            <Text style={styles.resultCount}>3km以内に{state.restaurants.length}件</Text>
-            <Text style={styles.privacy}>現在地は検索時だけ使用し、保存しません。</Text>
+        <View style={styles.mapStage}>
+          <RestaurantMap
+            center={state.center}
+            fullScreen
+            onSelect={restaurant => setSelectedId(restaurant.id)}
+            restaurants={state.restaurants}
+            selectedId={selectedId}
+          />
+
+          <View style={styles.mapToolbar}>
+            <View style={styles.resultSummary}>
+              <Text style={styles.resultCount}>3km以内に{state.restaurants.length}件</Text>
+              <Text style={styles.privacy}>現在地は保存しません</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={retry}
+              style={({ pressed }) => [styles.reloadButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.reloadText}>現在地を再取得</Text>
+            </Pressable>
           </View>
-          {state.restaurants.length > 0 ? (
-            <>
-              <RestaurantMap
-                center={state.center}
-                onSelect={restaurant => setSelectedId(restaurant.id)}
-                restaurants={state.restaurants}
-                selectedId={selectedId}
-              />
-              {selected && (
-                <View style={styles.shopCard}>
-                  {selected.image_url && <Image source={{ uri: selected.image_url }} style={styles.shopImage} />}
-                  <View style={styles.shopBody}>
-                    <Text style={styles.distance}>現在地から{selected.distance_m.toLocaleString()}m</Text>
-                    <Text style={styles.shopName}>{selected.name}</Text>
-                    {selected.genre && <Text style={styles.shopInfo}>{selected.genre}</Text>}
-                    {selected.address && <Text style={styles.shopInfo}>{selected.address}</Text>}
-                    <View style={styles.reservationStatus}>
-                      {selectedReservation ? (
-                        <>
-                          <Text style={styles.reservedLabel}>予約済み</Text>
-                          <Text style={styles.reservationDate}>{formatDateTime(selectedReservation.dateTime)}</Text>
-                          <Button title="予約内容を確認" variant="secondary" onPress={() => router.push('/reservations')} />
-                        </>
-                      ) : (
-                        <>
-                          <Text style={styles.reservationEmpty}>このお店の予約記録はありません</Text>
-                          <Button title="予約を記録する" onPress={openReservationForm} />
-                        </>
-                      )}
+
+          {state.restaurants.length === 0 && (
+            <View style={styles.emptyOverlay}>
+              <Text style={styles.empty}>3km以内に該当するお店が見つかりませんでした。</Text>
+            </View>
+          )}
+
+          {selected && (
+            <View pointerEvents="box-none" style={[styles.bottomOverlay, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+              <ScrollView style={styles.shopCard} contentContainerStyle={styles.shopCardContent}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.shopSummary}>
+                    {selected.image_url && <Image source={{ uri: selected.image_url }} style={styles.shopImage} />}
+                    <View style={styles.shopTitleArea}>
+                      <Text style={styles.distance}>現在地から{selected.distance_m.toLocaleString()}m</Text>
+                      <Text style={styles.shopName}>{selected.name}</Text>
+                      {selected.genre && <Text style={styles.shopInfo}>{selected.genre}</Text>}
                     </View>
-                    {selected.detail_url && (
-                      <Pressable
-                        accessibilityRole="link"
-                        onPress={() => void Linking.openURL(selected.detail_url as string)}
-                        style={({ pressed }) => [styles.shopLink, pressed && styles.pressed]}
-                      >
-                        <Text style={styles.shopLinkText}>店舗詳細を見る</Text>
-                        <ExternalLinkIcon color={colors.textSecondary} />
-                      </Pressable>
-                    )}
                   </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="店舗情報を閉じる"
+                    hitSlop={spacing.sm}
+                    onPress={() => setSelectedId(null)}
+                  >
+                    <CloseIcon color={colors.text} />
+                  </Pressable>
                 </View>
-              )}
-            </>
-          ) : <Text style={styles.empty}>3km以内に該当するお店が見つかりませんでした。</Text>}
-          <Button title="現在地を再取得" onPress={retry} variant="secondary" />
-        </ScrollView>
+                {selected.address && <Text style={styles.shopInfo}>{selected.address}</Text>}
+                <View style={styles.reservationStatus}>
+                  {selectedReservation ? (
+                    <>
+                      <Text style={styles.reservedLabel}>予約済み</Text>
+                      <Text style={styles.reservationDate}>{formatDateTime(selectedReservation.dateTime)}</Text>
+                      <Button title="予約内容を確認" variant="secondary" onPress={() => router.push('/reservations')} />
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.reservationEmpty}>このお店の予約記録はありません</Text>
+                      <Button title="予約を記録する" onPress={openReservationForm} />
+                    </>
+                  )}
+                </View>
+                {selected.detail_url && (
+                  <Pressable
+                    accessibilityRole="link"
+                    onPress={() => void Linking.openURL(selected.detail_url as string)}
+                    style={({ pressed }) => [styles.shopLink, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.shopLinkText}>店舗詳細を見る</Text>
+                    <ExternalLinkIcon color={colors.textSecondary} />
+                  </Pressable>
+                )}
+              </ScrollView>
+            </View>
+          )}
+        </View>
       )}
     </View>
   );
@@ -200,16 +229,24 @@ export function ShopMapScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.screen },
-  content: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: spacing.screen, paddingBottom: spacing.xl, gap: spacing.lg },
+  mapStage: { flex: 1, position: 'relative', overflow: 'hidden' },
   notFound: { ...fonts.body, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xl },
   status: { ...fonts.body, color: colors.textSecondary, textAlign: 'center' },
   error: { ...fonts.body, color: '#b33030', textAlign: 'center' },
-  resultHeader: { gap: 4 },
+  mapToolbar: { position: 'absolute', zIndex: 1000, top: spacing.md, left: spacing.md, right: spacing.md, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.sm },
+  resultSummary: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.md, backgroundColor: colors.background },
   resultCount: { ...fonts.bodyBold, color: colors.text },
   privacy: { ...fonts.caption, color: colors.textSecondary },
-  shopCard: { overflow: 'hidden', borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, backgroundColor: colors.background },
-  shopImage: { width: '100%', height: 180, backgroundColor: colors.imagePlaceholder },
-  shopBody: { gap: spacing.sm, padding: spacing.md },
+  reloadButton: { minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.background },
+  reloadText: { ...fonts.caption, color: colors.text, fontWeight: '700' },
+  emptyOverlay: { position: 'absolute', zIndex: 1000, top: '45%', left: spacing.md, right: spacing.md, alignItems: 'center' },
+  bottomOverlay: { position: 'absolute', zIndex: 1000, left: 0, right: 0, bottom: 0, alignItems: 'center', paddingHorizontal: spacing.md },
+  shopCard: { width: '100%', maxWidth: 752, maxHeight: '58%', borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, backgroundColor: colors.background, elevation: 8, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
+  shopCardContent: { gap: spacing.sm, padding: spacing.md },
+  cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  shopSummary: { flex: 1, flexDirection: 'row', gap: spacing.md },
+  shopImage: { width: 88, height: 88, borderRadius: radius.md, backgroundColor: colors.imagePlaceholder },
+  shopTitleArea: { flex: 1, gap: 2 },
   distance: { ...fonts.label, color: colors.textSecondary },
   shopName: { ...fonts.cardTitle, color: colors.text },
   shopInfo: { ...fonts.body, color: colors.textSecondary },
@@ -219,6 +256,6 @@ const styles = StyleSheet.create({
   reservationEmpty: { ...fonts.body, color: colors.textSecondary },
   shopLink: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: spacing.sm },
   shopLinkText: { ...fonts.bodyBold, color: colors.text },
-  empty: { ...fonts.body, color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.xl },
+  empty: { ...fonts.body, color: colors.text, textAlign: 'center', padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.background },
   pressed: { opacity: 0.6 },
 });
