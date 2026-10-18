@@ -6,13 +6,22 @@
 
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppDataProvider } from '../data/AppDataContext';
 
 export default function RootLayout() {
   return (
-    <AppDataProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
-    </AppDataProvider>
+    // スタンプ地図のピンチ・ドラッグ操作に必要な、ジェスチャー判定の土台です。
+    <GestureHandlerRootView style={styles.root}>
+      <AppDataProvider>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </AppDataProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

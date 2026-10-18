@@ -8,7 +8,7 @@ Route: `/map`. This is the root screen of the map tab and shows progress derived
 
 1. Title `旅のスタンプ地図`
 2. Segmented control with `世界` and `日本`
-3. White vector map with grey borders and verified regions filled black
+3. White vector map with grey borders and verified regions filled black, with zoom buttons in its top-right corner
 4. Legend for visited and unvisited fills
 5. Progress card showing the visited count and total target count
 6. Selected-region detail card
@@ -29,7 +29,8 @@ The world view is initially selected. Switching views does not navigate or disca
 - Update the progress card immediately when switching between world and Japan modes.
 - Pressing a region displays its name, verified visit count, and up to three matching restaurant visits. Pressing one of those visits opens `/visits/<visit ID>`.
 - Selecting a region only displays stamp progress and matching visit history. It never starts restaurant search.
-- The map must scale to the available width without horizontal scrolling.
+- The map must scale to the available width without horizontal scrolling. Its frame size, zoom buttons, pinch and drag behavior follow `docs/spec/components/stamp-map.md`.
+- Switching between world and Japan modes resets the map to the whole-map view.
 
 ## Empty and Error States
 
