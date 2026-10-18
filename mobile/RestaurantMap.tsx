@@ -1,6 +1,6 @@
 import MapView, { Circle, Marker } from 'react-native-maps';
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, StyleSheet, useAnimatedValue, View } from 'react-native';
 
 import type { MapRestaurant, RestaurantMapProps } from './RestaurantMap.types';
 
@@ -18,7 +18,7 @@ function RestaurantMarker({
   reduceMotion: boolean;
   onSelect?: (restaurant: MapRestaurant) => void;
 }) {
-  const scale = useRef(new Animated.Value(selected ? SELECTED_SCALE : 1)).current;
+  const scale = useAnimatedValue(selected ? SELECTED_SCALE : 1);
   const previousSelected = useRef(selected);
   const [tracksViewChanges, setTracksViewChanges] = useState(false);
   const translateY = scale.interpolate({
