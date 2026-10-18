@@ -24,7 +24,10 @@ For valid input, display in this order:
 
 ## Behavior
 
-- `写真を撮り直す` clears the pending photo and replaces the current route with `/camera?reservationId={id}`.
+- `写真を撮り直す` immediately requests camera permission when needed and opens the platform camera without navigating to another app screen.
+- While the camera is opening, disable both actions and display `起動しています…` on the retake action.
+- If retaking is cancelled or fails, keep the current photo and memo, remain on this screen, and display the corresponding message.
+- After a successful retake, replace the persisted pending photo for the same reservation and display the new photo on this screen.
 - `記録する` persists a verified visit record using the reservation ID, the reservation's restaurant ID when available, shop name, country, Japanese prefecture when applicable, captured photo URI, trimmed memo, and current timestamp. Its verification mode is `photo`.
 - The same action adds the lightweight visited-shop entry used by the home screen.
 - Disable both actions while persistence is running. If persistence fails, remain on this screen and show `訪問記録を保存できませんでした。`.
@@ -34,4 +37,4 @@ For valid input, display in this order:
 
 ## Self-Review
 
-Score: **99/100**. Loading, recovery, persisted draft state, element order, retake behavior, saved fields, cleanup, and navigation are explicit.
+Score: **99/100**. Loading, recovery, persisted draft state, direct retake behavior, failure preservation, saved fields, cleanup, and navigation are explicit.

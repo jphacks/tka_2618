@@ -9,30 +9,40 @@ import { colors, fonts, radius, spacing } from '../constants/theme';
 import { useAppData } from '../data/AppDataContext';
 import type { VisitRecord } from '../data/visitTypes';
 import { saveVisit } from '../repositories/visitRepository';
+import { captureVisitPhoto } from '../services/visitPhotos';
 import { todayString } from '../utils/date';
 
 export function PhotoConfirmScreen() {
   const { reservationId } = useLocalSearchParams<{ reservationId: string }>();
-  const { isReady, reservations, addVisitedShop, pendingVisitPhoto, clearPendingVisitPhoto } = useAppData();
+  const { isReady, reservations, addVisitedShop, pendingVisitPhoto, setPendingVisitPhoto, clearPendingVisitPhoto } = useAppData();
   const [memo, setMemo] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [saveError, setSaveError] = useState('');
 
   const reservation = reservations.find(item => item.id === reservationId);
   const photoUri = pendingVisitPhoto?.reservationId === reservationId ? pendingVisitPhoto.uri : undefined;
 
   const retake = async () => {
-    if (!reservation) return;
-    try {
-      await clearPendingVisitPhoto();
-      router.replace({ pathname: '/camera', params: { reservationId: reservation.id } });
-    } catch {
-      setSaveError('写真情報を更新できませんでした。もう一度お試しください。');
+    if (!reservation || isSaving || isCapturing) return;
+    setIsCapturing(true);
+    setSaveError('');
+
+    const result = await captureVisitPhoto();
+    if (result.status === 'captured') {
+      try {
+        await setPendingVisitPhoto({ reservationId: reservation.id, uri: result.uri });
+      } catch {
+        setSaveError('撮影した写真を一時保存できませんでした。もう一度お試しください。');
+      }
+    } else {
+      setSaveError(result.status === 'cancelled' ? '撮影をキャンセルしました。' : result.message);
     }
+    setIsCapturing(false);
   };
 
   const record = async () => {
-    if (!reservation || !photoUri || isSaving) return;
+    if (!reservation || !photoUri || isSaving || isCapturing) return;
     setIsSaving(true);
     setSaveError('');
     const visitedAt = new Date();
@@ -86,8 +96,14 @@ export function PhotoConfirmScreen() {
         <View style={styles.missingPhoto}>
           <Text style={styles.missingTitle}>写真を確認できませんでした</Text>
           <Text style={styles.missingDescription}>撮影途中でアプリが閉じられたか、写真の保存が完了しなかった可能性があります。</Text>
-          <Button title="写真を撮り直す" variant="secondary" onPress={() => void retake()} />
-          <Button title="予約一覧に戻る" variant="secondary" onPress={() => router.replace('/reservations')} />
+          <Button
+            title={isCapturing ? '起動しています…' : '写真を撮り直す'}
+            variant="secondary"
+            onPress={() => void retake()}
+            disabled={isCapturing}
+          />
+          <Button title="予約一覧に戻る" variant="secondary" onPress={() => router.replace('/reservations')} disabled={isCapturing} />
+          {saveError ? <Text accessibilityRole="alert" style={styles.saveError}>{saveError}</Text> : null}
         </View>
       ) : (
         <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -108,8 +124,13 @@ export function PhotoConfirmScreen() {
           </ScrollView>
           <View style={styles.footer}>
             {saveError ? <Text accessibilityRole="alert" style={styles.saveError}>{saveError}</Text> : null}
-            <Button title="写真を撮り直す" variant="secondary" onPress={() => void retake()} disabled={isSaving} />
-            <Button title={isSaving ? '保存しています…' : '記録する'} onPress={() => void record()} disabled={isSaving} />
+            <Button
+              title={isCapturing ? '起動しています…' : '写真を撮り直す'}
+              variant="secondary"
+              onPress={() => void retake()}
+              disabled={isSaving || isCapturing}
+            />
+            <Button title={isSaving ? '保存しています…' : '記録する'} onPress={() => void record()} disabled={isSaving || isCapturing} />
           </View>
         </KeyboardAvoidingView>
       )}

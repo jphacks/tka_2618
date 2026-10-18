@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Allow the user to take a real photo as evidence of visiting a reserved restaurant. The captured photo is handed to the confirmation screen before it is added to the visit history.
+Provide a fallback photo-capture route for an old link or direct route access. In the normal reservation flow, the reservation card opens the platform camera directly and this screen is skipped.
 
 ## Route and Input
 
@@ -23,6 +23,7 @@ The app uses the platform camera UI; it does not embed a live camera preview in 
 
 ## Behavior
 
+- Do not navigate here from the reservation list or the photo confirmation screen.
 - Start camera permission and camera launch only from the user's `カメラを起動` button press.
 - While the camera launch is in progress, disable the action and change its label to `起動しています…`.
 - If permission is denied or capture fails, show the photo service error and restore the action.
@@ -32,4 +33,4 @@ The app uses the platform camera UI; it does not embed a live camera preview in 
 
 ## Self-Review
 
-Score: **98/100**. The route validation, exact copy, layout order, permission timing, progress, cancellation, error, success state, data handoff, and destination are explicit.
+Score: **98/100**. The fallback-only role, route validation, exact copy, permission timing, progress, cancellation, error, data handoff, and destination are explicit.

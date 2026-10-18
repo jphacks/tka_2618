@@ -14,9 +14,18 @@ type Props = {
   country?: Country;
   onPressPhoto: (reservation: Reservation) => void;
   onPressDelete: (reservation: Reservation) => void;
+  isCapturing?: boolean;
+  actionsDisabled?: boolean;
 };
 
-export function ReservationCard({ reservation, country, onPressPhoto, onPressDelete }: Props) {
+export function ReservationCard({
+  reservation,
+  country,
+  onPressPhoto,
+  onPressDelete,
+  isCapturing = false,
+  actionsDisabled = false,
+}: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.content}>
@@ -35,12 +44,19 @@ export function ReservationCard({ reservation, country, onPressPhoto, onPressDel
         </View>
       </View>
       <View style={styles.actions}>
-        <Button title="写真を撮る" size="small" onPress={() => onPressPhoto(reservation)} style={styles.action} />
+        <Button
+          title={isCapturing ? '起動しています…' : '写真を撮る'}
+          size="small"
+          onPress={() => onPressPhoto(reservation)}
+          disabled={actionsDisabled}
+          style={styles.action}
+        />
         <Button
           title="予約を削除"
           size="small"
           variant="secondary"
           onPress={() => onPressDelete(reservation)}
+          disabled={actionsDisabled}
           style={styles.action}
         />
       </View>
