@@ -1,12 +1,31 @@
 import type { MapShape } from '../data/mapShapes';
+import { calculateMapShapeBounds, type MapShapeBounds } from '../utils/mapPathBounds';
 
 export type StampMapProps = {
   shapes: MapShape[];
   viewBox: string;
   visitCounts: ReadonlyMap<string, number>;
+  /** 地域コードごとの、最新の訪問写真URIです。 */
+  visitPhotos: ReadonlyMap<string, string>;
   selectedCode: string | null;
   onSelect: (shape: MapShape) => void;
 };
+
+export type StampPhotoRegion = { shape: MapShape; uri: string; bounds: MapShapeBounds; clipId: string };
+
+/** 写真で塗る訪問済み地域と、写真を敷き詰める外接矩形を返します。 */
+export function listStampPhotoRegions(
+  shapes: MapShape[],
+  visitCounts: ReadonlyMap<string, number>,
+  visitPhotos: ReadonlyMap<string, string>,
+): StampPhotoRegion[] {
+  return shapes.flatMap(shape => {
+    const uri = visitPhotos.get(shape.code);
+    const bounds = calculateMapShapeBounds(shape.path);
+    if (!uri || !bounds || (visitCounts.get(shape.code) ?? 0) === 0) return [];
+    return [{ shape, uri, bounds, clipId: `stamp-photo-${shape.code}` }];
+  });
+}
 
 /** SVG座標系で表した、いま地図枠に映している範囲です。 */
 export type MapCamera = { x: number; y: number; width: number; height: number };

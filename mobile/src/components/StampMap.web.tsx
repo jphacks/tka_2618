@@ -2,12 +2,19 @@ import { useEffect, useMemo, useRef, type KeyboardEvent, type MouseEvent, type P
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { STAMP_MAP_ZOOM_IN, STAMP_MAP_ZOOM_OUT, StampMapControls, useStampMapCamera } from './StampMapControls';
-import { calculateStampMapSize, cameraToViewBox, panCamera, zoomCamera, type StampMapProps } from './StampMap.types';
+import {
+  calculateStampMapSize,
+  cameraToViewBox,
+  listStampPhotoRegions,
+  panCamera,
+  zoomCamera,
+  type StampMapProps,
+} from './StampMap.types';
 
 const DRAG_THRESHOLD = 4;
 const WHEEL_ZOOM_SENSITIVITY = 0.002;
 
-export function StampMap({ shapes, viewBox, visitCounts, selectedCode, onSelect }: StampMapProps) {
+export function StampMap({ shapes, viewBox, visitCounts, visitPhotos, selectedCode, onSelect }: StampMapProps) {
   const { width } = useWindowDimensions();
   const mapSize = calculateStampMapSize(width);
   const { camera, updateCamera, zoom, zoomBy, reset } = useStampMapCamera(viewBox, mapSize.width, mapSize.height);
@@ -67,27 +74,61 @@ export function StampMap({ shapes, viewBox, visitCounts, selectedCode, onSelect 
       event.preventDefault();
       onSelect(shape);
     };
-    return shapes.map(shape => {
-      const visited = (visitCounts.get(shape.code) ?? 0) > 0;
-      const selected = selectedCode === shape.code;
-      return (
-        <path
-          aria-label={shape.name}
-          role="button"
-          tabIndex={0}
-          key={shape.code}
-          d={shape.path}
-          fill={visited ? '#111111' : '#ffffff'}
-          stroke={selected ? '#c69214' : '#929b98'}
-          strokeWidth={selected ? 2.5 : 0.6}
-          vectorEffect="non-scaling-stroke"
-          onClick={() => onSelect(shape)}
-          onKeyDown={event => selectWithKeyboard(event, shape)}
-          style={{ cursor: 'pointer' }}
-        />
-      );
-    });
-  }, [shapes, visitCounts, selectedCode, onSelect]);
+    const photoRegions = listStampPhotoRegions(shapes, visitCounts, visitPhotos);
+    return (
+      <>
+        <defs>
+          {photoRegions.map(region => (
+            <clipPath key={region.clipId} id={region.clipId}><path d={region.shape.path} /></clipPath>
+          ))}
+        </defs>
+        {shapes.map(shape => {
+          const visited = (visitCounts.get(shape.code) ?? 0) > 0;
+          const selected = selectedCode === shape.code;
+          return (
+            <path
+              aria-label={shape.name}
+              role="button"
+              tabIndex={0}
+              key={shape.code}
+              d={shape.path}
+              fill={visited ? '#111111' : '#ffffff'}
+              stroke={selected ? '#c69214' : '#929b98'}
+              strokeWidth={selected ? 2.5 : 0.6}
+              vectorEffect="non-scaling-stroke"
+              onClick={() => onSelect(shape)}
+              onKeyDown={event => selectWithKeyboard(event, shape)}
+              style={{ cursor: 'pointer' }}
+            />
+          );
+        })}
+        {/* 写真が読み込めない場合は下の黒い塗りが見える。操作対象は下の地域パスに任せる。 */}
+        {photoRegions.map(region => {
+          const selected = selectedCode === region.shape.code;
+          return (
+            <g key={region.clipId} aria-hidden onClick={() => onSelect(region.shape)} style={{ cursor: 'pointer' }}>
+              <image
+                href={region.uri}
+                x={region.bounds.x}
+                y={region.bounds.y}
+                width={region.bounds.width}
+                height={region.bounds.height}
+                preserveAspectRatio="xMidYMid slice"
+                clipPath={`url(#${region.clipId})`}
+              />
+              <path
+                d={region.shape.path}
+                fill="none"
+                stroke={selected ? '#c69214' : '#929b98'}
+                strokeWidth={selected ? 2.5 : 0.6}
+                vectorEffect="non-scaling-stroke"
+              />
+            </g>
+          );
+        })}
+      </>
+    );
+  }, [shapes, visitCounts, visitPhotos, selectedCode, onSelect]);
 
   return (
     <View style={[styles.frame, mapSize]}>
