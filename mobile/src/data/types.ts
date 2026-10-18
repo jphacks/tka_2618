@@ -54,6 +54,12 @@ export type Reservation = {
   info?: string; // 例: '新宿駅 徒歩3分・ディナー 2,000〜3,000円'
   imageUrl?: string;
   notify: boolean; // 予約時間に通知するか
+  notificationId?: string;
+};
+
+export type PendingVisitPhoto = {
+  reservationId: string;
+  uri: string;
 };
 
 export type HomeData = {

@@ -17,6 +17,19 @@ export function ReservationsScreen() {
   const { reservations, removeReservation } = useAppData();
   // 削除しようとしている予約（確認ダイアログを出している間だけ入る）
   const [deleting, setDeleting] = useState<Reservation | null>(null);
+  const [deleteError, setDeleteError] = useState('');
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setDeleteError('');
+    try {
+      await removeReservation(deleting.id);
+      setDeleting(null);
+    } catch {
+      setDeleting(null);
+      setDeleteError('予約を削除できませんでした。もう一度お試しください。');
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -31,6 +44,8 @@ export function ReservationsScreen() {
             予約したお店はまだありません。{'\n'}「＋ 予約を記録」から追加できます。
           </Text>
         )}
+
+        {deleteError ? <Text accessibilityRole="alert" style={styles.error}>{deleteError}</Text> : null}
 
         {reservations.map(reservation => (
           <ReservationCard
@@ -49,10 +64,7 @@ export function ReservationsScreen() {
         message="削除すると元に戻せません"
         confirmLabel="削除する"
         onCancel={() => setDeleting(null)}
-        onConfirm={() => {
-          if (deleting) removeReservation(deleting.id);
-          setDeleting(null);
-        }}
+        onConfirm={() => void confirmDelete()}
       />
     </View>
   );
@@ -76,5 +88,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xl,
+  },
+  error: {
+    ...fonts.caption,
+    color: '#b33030',
+    textAlign: 'center',
   },
 });

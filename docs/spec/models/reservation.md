@@ -11,9 +11,10 @@
 - `info`: optional restaurant description or address
 - `imageUrl`: optional restaurant image URI
 - `notify`: whether reservation-time notification is enabled
+- `notificationId`: optional native scheduled-notification identifier
 
-`shopId` is optional so existing fixtures and reservations entered by hand remain valid.
+`shopId` and `notificationId` are optional so manually entered reservations and reservations without a scheduled notification remain valid. Reservations persist in SQLite on iOS and Android and AsyncStorage on web.
 
 ## Self-Review
 
-Score: **96/100**. Every persisted field, format, purpose, and compatibility rule is explicit.
+Score: **98/100**. Every persisted field, format, purpose, storage behavior, and compatibility rule is explicit.

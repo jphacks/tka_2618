@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../components/Button';
 import { CardImage } from '../components/CardImage';
 import { FormField, TextField } from '../components/FormField';
@@ -13,7 +13,7 @@ import { todayString } from '../utils/date';
 
 export function PhotoConfirmScreen() {
   const { reservationId } = useLocalSearchParams<{ reservationId: string }>();
-  const { reservations, addVisitedShop, pendingVisitPhoto, clearPendingVisitPhoto } = useAppData();
+  const { isReady, reservations, addVisitedShop, pendingVisitPhoto, clearPendingVisitPhoto } = useAppData();
   const [memo, setMemo] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -21,10 +21,14 @@ export function PhotoConfirmScreen() {
   const reservation = reservations.find(item => item.id === reservationId);
   const photoUri = pendingVisitPhoto?.reservationId === reservationId ? pendingVisitPhoto.uri : undefined;
 
-  const retake = () => {
+  const retake = async () => {
     if (!reservation) return;
-    clearPendingVisitPhoto();
-    router.replace({ pathname: '/camera', params: { reservationId: reservation.id } });
+    try {
+      await clearPendingVisitPhoto();
+      router.replace({ pathname: '/camera', params: { reservationId: reservation.id } });
+    } catch {
+      setSaveError('写真情報を更新できませんでした。もう一度お試しください。');
+    }
   };
 
   const record = async () => {
@@ -53,14 +57,14 @@ export function PhotoConfirmScreen() {
 
     try {
       await saveVisit(visit);
-      addVisitedShop({
+      await addVisitedShop({
         name: reservation.shopName,
         countryCode: reservation.countryCode,
         visitedAt: todayString(visitedAt),
         imageUrl: photoUri,
         memo: memo.trim() || undefined,
       });
-      clearPendingVisitPhoto();
+      await clearPendingVisitPhoto();
       router.replace('/map');
     } catch {
       setIsSaving(false);
@@ -71,12 +75,19 @@ export function PhotoConfirmScreen() {
   return (
     <View style={styles.screen}>
       <Header title="画像を確認" showBack />
-      {!reservation ? (
+      {!isReady ? (
+        <View style={styles.loading}>
+          <ActivityIndicator accessibilityLabel="撮影した写真を読み込み中" color={colors.primary} />
+          <Text style={styles.notFound}>写真を読み込んでいます…</Text>
+        </View>
+      ) : !reservation ? (
         <Text style={styles.notFound}>予約が見つかりませんでした</Text>
       ) : !photoUri ? (
         <View style={styles.missingPhoto}>
-          <Text style={styles.notFound}>撮影した写真が見つかりませんでした</Text>
-          <Button title="写真を撮り直す" variant="secondary" onPress={retake} />
+          <Text style={styles.missingTitle}>写真を確認できませんでした</Text>
+          <Text style={styles.missingDescription}>撮影途中でアプリが閉じられたか、写真の保存が完了しなかった可能性があります。</Text>
+          <Button title="写真を撮り直す" variant="secondary" onPress={() => void retake()} />
+          <Button title="予約一覧に戻る" variant="secondary" onPress={() => router.replace('/reservations')} />
         </View>
       ) : (
         <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -97,7 +108,7 @@ export function PhotoConfirmScreen() {
           </ScrollView>
           <View style={styles.footer}>
             {saveError ? <Text accessibilityRole="alert" style={styles.saveError}>{saveError}</Text> : null}
-            <Button title="写真を撮り直す" variant="secondary" onPress={retake} disabled={isSaving} />
+            <Button title="写真を撮り直す" variant="secondary" onPress={() => void retake()} disabled={isSaving} />
             <Button title={isSaving ? '保存しています…' : '記録する'} onPress={() => void record()} disabled={isSaving} />
           </View>
         </KeyboardAvoidingView>
@@ -123,6 +134,21 @@ const styles = StyleSheet.create({
   missingPhoto: {
     padding: spacing.screen,
     gap: spacing.lg,
+  },
+  missingTitle: {
+    ...fonts.sectionTitle,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  missingDescription: {
+    ...fonts.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  loading: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.screen,
   },
   content: {
     padding: spacing.screen,

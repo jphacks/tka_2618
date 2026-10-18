@@ -55,3 +55,7 @@ export async function saveVisit(record: VisitRecord) {
   const next = [record, ...visits.filter(item => item.id !== record.id)];
   await writeVisits(next);
 }
+
+export async function clearVisits() {
+  await AsyncStorage.removeItem(STORAGE_KEY);
+}

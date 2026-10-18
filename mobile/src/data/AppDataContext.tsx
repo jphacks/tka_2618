@@ -2,14 +2,24 @@
 // どの画面からでも useAppData() で読み書きできます。
 // 例: 「予約を作成」で保存 → 「予約したお店」の一覧にすぐ出る
 //
-// 今はアプリを閉じると元に戻ります（ダミーデータの状態）。
-// あとでAPIにつなぐときは、add / remove の中で API を呼ぶようにします。
+// iOS / Android は SQLite、Web は AsyncStorage に保存します。
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { getHomeData, getReservations } from './api';
-import type { CountryCode, Reservation, VisitedShop } from './types';
+import { clearVisits } from '../repositories/visitRepository';
+import {
+  clearVisitedShops,
+  deletePendingVisitPhoto,
+  deleteReservation,
+  loadLocalAppData,
+  saveNotificationsEnabled,
+  savePendingVisitPhoto,
+  saveReservation,
+  saveVisitedShop,
+} from '../repositories/localDataRepository';
+import type { CountryCode, PendingVisitPhoto, Reservation, VisitedShop } from './types';
 
 type AppData = {
+  isReady: boolean;
   reservations: Reservation[];
   visitedShops: VisitedShop[];
   // 食べた（記録した）国の国コード。地図を塗るのに使います
@@ -17,18 +27,13 @@ type AppData = {
   // 設定画面の「予約時間に通知する」
   notificationsEnabled: boolean;
   pendingVisitPhoto: PendingVisitPhoto | null;
-  addReservation: (reservation: Omit<Reservation, 'id'>) => void;
-  removeReservation: (id: string) => void;
-  addVisitedShop: (shop: Omit<VisitedShop, 'id'>) => void;
-  resetVisitedShops: () => void;
-  setNotificationsEnabled: (enabled: boolean) => void;
-  setPendingVisitPhoto: (photo: PendingVisitPhoto) => void;
-  clearPendingVisitPhoto: () => void;
-};
-
-type PendingVisitPhoto = {
-  reservationId: string;
-  uri: string;
+  addReservation: (reservation: Omit<Reservation, 'id'>) => Promise<void>;
+  removeReservation: (id: string) => Promise<void>;
+  addVisitedShop: (shop: Omit<VisitedShop, 'id'>) => Promise<void>;
+  resetVisitedShops: () => Promise<void>;
+  setNotificationsEnabled: (enabled: boolean) => Promise<void>;
+  setPendingVisitPhoto: (photo: PendingVisitPhoto) => Promise<void>;
+  clearPendingVisitPhoto: () => Promise<void>;
 };
 
 const AppDataContext = createContext<AppData | null>(null);
@@ -39,42 +44,70 @@ function newId(prefix: string) {
 }
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
+  const [isReady, setIsReady] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [visitedShops, setVisitedShops] = useState<VisitedShop[]>([]);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
   const [pendingVisitPhoto, setPendingVisitPhoto] = useState<PendingVisitPhoto | null>(null);
 
-  // 最初のデータを読み込みます（今はダミーデータ）
   useEffect(() => {
     let active = true;
-    Promise.all([getReservations(), getHomeData()]).then(([initialReservations, home]) => {
-      if (!active) return;
-      setReservations(initialReservations);
-      setVisitedShops(home.visitedShops);
-    });
+    loadLocalAppData()
+      .then(data => {
+        if (!active) return;
+        setReservations(data.reservations);
+        setVisitedShops(data.visitedShops);
+        setNotificationsEnabledState(data.notificationsEnabled);
+        setPendingVisitPhoto(data.pendingVisitPhoto);
+      })
+      .catch(() => {
+        // 画面は空の状態で利用でき、各書き込み失敗は操作した画面で表示する。
+      })
+      .finally(() => {
+        if (active) setIsReady(true);
+      });
     return () => {
       active = false;
     };
   }, []);
 
-  const addReservation = useCallback((reservation: Omit<Reservation, 'id'>) => {
-    setReservations(current =>
-      // 予約日時が早い順に並べます
-      [...current, { ...reservation, id: newId('r') }].sort((a, b) => a.dateTime.localeCompare(b.dateTime)),
-    );
+  const addReservation = useCallback(async (reservation: Omit<Reservation, 'id'>) => {
+    const next = { ...reservation, id: newId('r') };
+    await saveReservation(next);
+    setReservations(current => [...current, next].sort((a, b) => a.dateTime.localeCompare(b.dateTime)));
   }, []);
 
-  const removeReservation = useCallback((id: string) => {
+  const removeReservation = useCallback(async (id: string) => {
+    await deleteReservation(id);
     setReservations(current => current.filter(reservation => reservation.id !== id));
+    setPendingVisitPhoto(current => current?.reservationId === id ? null : current);
   }, []);
 
-  const addVisitedShop = useCallback((shop: Omit<VisitedShop, 'id'>) => {
-    // 新しい記録を先頭に入れます
-    setVisitedShops(current => [{ ...shop, id: newId('v') }, ...current]);
+  const addVisitedShop = useCallback(async (shop: Omit<VisitedShop, 'id'>) => {
+    const next = { ...shop, id: newId('v') };
+    await saveVisitedShop(next);
+    setVisitedShops(current => [next, ...current]);
   }, []);
 
-  const resetVisitedShops = useCallback(() => setVisitedShops([]), []);
-  const clearPendingVisitPhoto = useCallback(() => setPendingVisitPhoto(null), []);
+  const resetVisitedShops = useCallback(async () => {
+    await Promise.all([clearVisitedShops(), clearVisits()]);
+    setVisitedShops([]);
+  }, []);
+
+  const setNotificationsEnabled = useCallback(async (enabled: boolean) => {
+    await saveNotificationsEnabled(enabled);
+    setNotificationsEnabledState(enabled);
+  }, []);
+
+  const persistPendingVisitPhoto = useCallback(async (photo: PendingVisitPhoto) => {
+    await savePendingVisitPhoto(photo);
+    setPendingVisitPhoto(photo);
+  }, []);
+
+  const clearPendingVisitPhoto = useCallback(async () => {
+    await deletePendingVisitPhoto();
+    setPendingVisitPhoto(null);
+  }, []);
 
   const visitedCountryCodes = useMemo(
     () => new Set(visitedShops.map(shop => shop.countryCode)),
@@ -83,6 +116,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      isReady,
       reservations,
       visitedShops,
       visitedCountryCodes,
@@ -93,10 +127,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       addVisitedShop,
       resetVisitedShops,
       setNotificationsEnabled,
-      setPendingVisitPhoto,
+      setPendingVisitPhoto: persistPendingVisitPhoto,
       clearPendingVisitPhoto,
     }),
     [
+      isReady,
       reservations,
       visitedShops,
       visitedCountryCodes,
@@ -106,6 +141,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       removeReservation,
       addVisitedShop,
       resetVisitedShops,
+      setNotificationsEnabled,
+      persistPendingVisitPhoto,
       clearPendingVisitPhoto,
     ],
   );

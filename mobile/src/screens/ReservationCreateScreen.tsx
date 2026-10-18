@@ -53,6 +53,8 @@ export function ReservationCreateScreen() {
   const [time, setTime] = useState('19:00');
   const [notify, setNotify] = useState(true);
   const [openSheet, setOpenSheet] = useState<'country' | 'prefecture' | 'dateTime' | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const country = findCountry(countryCode ?? undefined);
   const prefecture = japanMapShapes.find(item => item.code === prefectureCode);
@@ -61,19 +63,26 @@ export function ReservationCreateScreen() {
     && shopName.trim().length > 0
     && (country.code !== 'JP' || prefecture !== undefined);
 
-  const save = () => {
-    if (!country || (country.code === 'JP' && !prefecture)) return;
-    addReservation({
-      shopId: params.shopId,
-      countryCode: country.code,
-      prefectureCode: country.code === 'JP' ? prefecture?.code : undefined,
-      shopName: shopName.trim(),
-      dateTime,
-      notify,
-      info: params.info,
-      imageUrl: params.imageUrl ?? country.imageUrl,
-    });
-    router.back();
+  const save = async () => {
+    if (!country || (country.code === 'JP' && !prefecture) || isSaving) return;
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      await addReservation({
+        shopId: params.shopId,
+        countryCode: country.code,
+        prefectureCode: country.code === 'JP' ? prefecture?.code : undefined,
+        shopName: shopName.trim(),
+        dateTime,
+        notify,
+        info: params.info,
+        imageUrl: params.imageUrl ?? country.imageUrl,
+      });
+      router.back();
+    } catch {
+      setIsSaving(false);
+      setSaveError('予約を保存できませんでした。もう一度お試しください。');
+    }
   };
 
   return (
@@ -130,7 +139,8 @@ export function ReservationCreateScreen() {
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: spacing.screen }]}>
-          <Button title="予約を保存" onPress={save} disabled={!canSave} />
+          <Button title={isSaving ? '保存しています…' : '予約を保存'} onPress={() => void save()} disabled={!canSave || isSaving} />
+          {saveError ? <Text accessibilityRole="alert" style={styles.saveError}>{saveError}</Text> : null}
           {!canSave && (
             <Text style={styles.hint}>
               {country?.code === 'JP' ? '都道府県とお店の名前を入力すると保存できます' : '国とお店の名前を入力すると保存できます'}
@@ -236,6 +246,11 @@ const styles = StyleSheet.create({
   hint: {
     ...fonts.caption,
     color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  saveError: {
+    ...fonts.caption,
+    color: '#b33030',
     textAlign: 'center',
   },
   optionList: {

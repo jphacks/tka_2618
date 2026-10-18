@@ -19,6 +19,27 @@ export function SettingsScreen() {
   const { notificationsEnabled, setNotificationsEnabled, resetVisitedShops } = useAppData();
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [openSheet, setOpenSheet] = useState<'about' | 'credits' | null>(null);
+  const [saveError, setSaveError] = useState('');
+
+  const changeNotifications = async (enabled: boolean) => {
+    setSaveError('');
+    try {
+      await setNotificationsEnabled(enabled);
+    } catch {
+      setSaveError('通知設定を保存できませんでした。');
+    }
+  };
+
+  const resetRecords = async () => {
+    setSaveError('');
+    try {
+      await resetVisitedShops();
+      setConfirmingReset(false);
+    } catch {
+      setConfirmingReset(false);
+      setSaveError('記録をリセットできませんでした。');
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -30,7 +51,7 @@ export function SettingsScreen() {
             right={
               <Toggle
                 value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
+                onValueChange={enabled => void changeNotifications(enabled)}
                 accessibilityLabel="予約時間に通知する"
               />
             }
@@ -49,6 +70,7 @@ export function SettingsScreen() {
         <Section title="開発用">
           <ApiStatus />
         </Section>
+        {saveError ? <Text accessibilityRole="alert" style={styles.error}>{saveError}</Text> : null}
       </ScrollView>
 
       <ConfirmDialog
@@ -57,10 +79,7 @@ export function SettingsScreen() {
         message="今まで訪れたお店と、地図の塗りがすべて消えます"
         confirmLabel="リセットする"
         onCancel={() => setConfirmingReset(false)}
-        onConfirm={() => {
-          resetVisitedShops();
-          setConfirmingReset(false);
-        }}
+        onConfirm={() => void resetRecords()}
       />
 
       <BottomSheet visible={openSheet === 'about'} title="このアプリについて" onClose={() => setOpenSheet(null)}>
@@ -131,5 +150,10 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.6,
+  },
+  error: {
+    ...fonts.caption,
+    color: '#b33030',
+    textAlign: 'center',
   },
 });

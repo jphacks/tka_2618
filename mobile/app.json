@@ -41,7 +41,8 @@
           "photosPermission": "訪問記録に写真を追加するために写真を使用します。",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "scheme": "jphack"
   }
