@@ -1,7 +1,7 @@
 // 予約を作成する画面です（Figma の「予約を作成」）。
 // 国・お店の名前・予約日時・通知を入力して「予約を保存」で一覧に戻ります。
 
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,11 +32,19 @@ const TIMES = Array.from({ length: 24 }, (_, index) => {
 
 export function ReservationCreateScreen() {
   const { addReservation } = useAppData();
+  const params = useLocalSearchParams<{
+    shopId?: string;
+    shopName?: string;
+    countryCode?: string;
+    imageUrl?: string;
+    info?: string;
+  }>();
   const insets = useSafeAreaInsets();
   const dates = useMemo(() => upcomingDates(), []);
+  const initialCountry = findCountry(params.countryCode);
 
-  const [countryCode, setCountryCode] = useState<CountryCode | null>(null);
-  const [shopName, setShopName] = useState('');
+  const [countryCode, setCountryCode] = useState<CountryCode | null>(initialCountry?.code ?? null);
+  const [shopName, setShopName] = useState(params.shopName ?? '');
   const [date, setDate] = useState(dates[0]);
   const [time, setTime] = useState('19:00');
   const [notify, setNotify] = useState(true);
@@ -49,11 +57,13 @@ export function ReservationCreateScreen() {
   const save = () => {
     if (!country) return;
     addReservation({
+      shopId: params.shopId,
       countryCode: country.code,
       shopName: shopName.trim(),
       dateTime,
       notify,
-      imageUrl: country.imageUrl,
+      info: params.info,
+      imageUrl: params.imageUrl ?? country.imageUrl,
     });
     router.back();
   };

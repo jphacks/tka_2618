@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -9,7 +9,9 @@ import { Header } from '../components/Header';
 import { ExternalLinkIcon } from '../components/Icons';
 import { colors, fonts, radius, spacing } from '../constants/theme';
 import { findCountry, getNearbyRestaurants } from '../data/api';
+import { useAppData } from '../data/AppDataContext';
 import type { Restaurant } from '../data/visitTypes';
+import { formatDateTime } from '../utils/date';
 
 const SEARCH_TIMEOUT_MS = 30_000;
 
@@ -22,6 +24,7 @@ type SearchState =
 export function ShopMapScreen() {
   const { countryCode } = useLocalSearchParams<{ countryCode: string }>();
   const country = findCountry(countryCode);
+  const { reservations } = useAppData();
   const [state, setState] = useState<SearchState>({ status: 'locating' });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -92,6 +95,31 @@ export function ShopMapScreen() {
   const selected = state.status === 'success'
     ? state.restaurants.find(restaurant => restaurant.id === selectedId) ?? null
     : null;
+  const selectedReservation = selected
+    ? reservations.find(reservation =>
+      reservation.shopId === selected.id
+      || (
+        !reservation.shopId
+        && reservation.countryCode === country.code
+        && reservation.shopName.trim().toLocaleLowerCase() === selected.name.trim().toLocaleLowerCase()
+      ),
+    )
+    : undefined;
+
+  const openReservationForm = () => {
+    if (!selected) return;
+    const info = [selected.genre, selected.address].filter(value => value !== null).join('・');
+    router.push({
+      pathname: '/reservations/new',
+      params: {
+        shopId: selected.id,
+        shopName: selected.name,
+        countryCode: country.code,
+        ...(selected.image_url ? { imageUrl: selected.image_url } : {}),
+        ...(info ? { info } : {}),
+      },
+    });
+  };
 
   return (
     <View style={styles.screen}>
@@ -128,6 +156,20 @@ export function ShopMapScreen() {
                     <Text style={styles.shopName}>{selected.name}</Text>
                     {selected.genre && <Text style={styles.shopInfo}>{selected.genre}</Text>}
                     {selected.address && <Text style={styles.shopInfo}>{selected.address}</Text>}
+                    <View style={styles.reservationStatus}>
+                      {selectedReservation ? (
+                        <>
+                          <Text style={styles.reservedLabel}>予約済み</Text>
+                          <Text style={styles.reservationDate}>{formatDateTime(selectedReservation.dateTime)}</Text>
+                          <Button title="予約内容を確認" variant="secondary" onPress={() => router.push('/reservations')} />
+                        </>
+                      ) : (
+                        <>
+                          <Text style={styles.reservationEmpty}>このお店の予約記録はありません</Text>
+                          <Button title="予約を記録する" onPress={openReservationForm} />
+                        </>
+                      )}
+                    </View>
                     {selected.detail_url && (
                       <Pressable
                         accessibilityRole="link"
@@ -166,6 +208,10 @@ const styles = StyleSheet.create({
   distance: { ...fonts.label, color: colors.textSecondary },
   shopName: { ...fonts.cardTitle, color: colors.text },
   shopInfo: { ...fonts.body, color: colors.textSecondary },
+  reservationStatus: { gap: spacing.sm, marginTop: spacing.sm, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  reservedLabel: { ...fonts.bodyBold, color: colors.text },
+  reservationDate: { ...fonts.body, color: colors.textSecondary },
+  reservationEmpty: { ...fonts.body, color: colors.textSecondary },
   shopLink: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: spacing.sm },
   shopLinkText: { ...fonts.bodyBold, color: colors.text },
   empty: { ...fonts.body, color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.xl },

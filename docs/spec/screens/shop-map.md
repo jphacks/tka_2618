@@ -20,7 +20,16 @@ Do not persist, log, or place device latitude or longitude in navigation paramet
 - Result count and privacy note
 - Current-location map with restaurant markers
 - Selected restaurant name, distance, genre, address, image, and external detail link when each value is available
+- Reservation status for the selected restaurant
 - `3km以内に該当するお店が見つかりませんでした。` when the result is empty
+
+## Reservation Status
+
+- Match a reservation by restaurant ID when both values have an ID. For older or manually entered reservations without a restaurant ID, match the same cuisine country and the restaurant name after trimming whitespace and converting it to lowercase.
+- When a match exists, display `予約済み`, its formatted reservation date and time, and a `予約内容を確認` secondary button that opens `/reservations`.
+- When no match exists, display `このお店の予約記録はありません` and a `予約を記録する` primary button.
+- `予約を記録する` opens `/reservations/new` with the selected restaurant ID, name, country code, image URL, and a human-readable information string made from available genre and address values.
+- Reservation status is derived from app-wide reservation state and must update when this screen is revisited after saving or deleting a reservation.
 
 ## Error and Retry
 

@@ -46,6 +46,7 @@ export type Shop = {
 // 予約したお店
 export type Reservation = {
   id: string;
+  shopId?: string;
   countryCode: CountryCode;
   shopName: string;
   dateTime: string; // 例: '2026-10-18T19:00'
