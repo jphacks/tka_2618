@@ -56,27 +56,31 @@ export function StampMapScreen() {
     return () => { active = false; controller.abort(); };
   }, [attempt]));
 
-  const verifiedVisits = useMemo(() => visits.filter(visit => visit.verification.status === 'verified'), [visits]);
+  const stampVisits = useMemo(() => visits.filter(visit => (
+    visit.verification.status === 'verified'
+    && visit.reservationId !== null
+    && visit.photoUris.length > 0
+  )), [visits]);
   const worldCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    verifiedVisits.forEach(visit => counts.set(visit.countryCode, (counts.get(visit.countryCode) ?? 0) + 1));
+    stampVisits.forEach(visit => counts.set(visit.countryCode, (counts.get(visit.countryCode) ?? 0) + 1));
     return counts;
-  }, [verifiedVisits]);
+  }, [stampVisits]);
   const japanCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    verifiedVisits.forEach(visit => {
+    stampVisits.forEach(visit => {
       if (visit.countryCode === 'JP' && visit.prefectureCode) {
         counts.set(visit.prefectureCode, (counts.get(visit.prefectureCode) ?? 0) + 1);
       }
     });
     return counts;
-  }, [verifiedVisits]);
+  }, [stampVisits]);
 
   const shapes = mode === 'world' ? worldMapShapes : japanMapShapes;
   const viewBox = mode === 'world' ? worldMapViewBox : japanMapViewBox;
   const counts = mode === 'world' ? worldCounts : japanCounts;
   const visitedRegions = shapes.filter(shape => (counts.get(shape.code) ?? 0) > 0);
-  const selectedVisits = selected ? verifiedVisits.filter(visit => mode === 'world'
+  const selectedVisits = selected ? stampVisits.filter(visit => mode === 'world'
     ? visit.countryCode === selected.code
     : visit.countryCode === 'JP' && visit.prefectureCode === selected.code) : [];
   const selectedName = selected ? names.get(selected.code) ?? selected.name : '';
@@ -130,7 +134,7 @@ export function StampMapScreen() {
                 ))}
               </View>
             )}
-            {visitedRegions.length === 0 ? <Text style={styles.empty}>まだ訪問記録がありません。</Text> : (
+            {visitedRegions.length === 0 ? <Text style={styles.empty}>予約したお店で写真を記録すると、地域が黒く塗られます。</Text> : (
               <View style={styles.list}>
                 <Text accessibilityRole="header" style={styles.heading}>訪問した地域</Text>
                 {visitedRegions.sort((left, right) => (names.get(left.code) ?? left.name).localeCompare(names.get(right.code) ?? right.name, 'ja')).map(shape => (

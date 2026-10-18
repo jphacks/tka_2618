@@ -18,6 +18,7 @@ The world view is initially selected. Switching views does not navigate or disca
 
 ## Map Rules
 
+- Only visits that are verified, linked to a reservation, and contain at least one photo contribute to map fills and visit counts.
 - World map regions use uppercase ISO country codes.
 - Japan map regions use the same prefecture codes returned by the backend.
 - Unvisited fill is white, visited fill is black, and borders are grey.
@@ -28,7 +29,7 @@ The world view is initially selected. Switching views does not navigate or disca
 
 ## Empty and Error States
 
-- With no verified visits, show the unpainted map and `まだ訪問記録がありません。`.
+- With no stamp-eligible visits, show the unpainted map and `予約したお店で写真を記録すると、地域が黒く塗られます。`.
 - Repository read failures show `訪問記録を読み込めませんでした。` and a retry action.
 
 ## Entry Points

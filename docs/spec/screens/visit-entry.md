@@ -22,6 +22,7 @@ Successful save replaces the current route with `/map` so the updated stamp map 
 ## Behavior
 
 - Location verification follows the visit verification service specification.
+- Records created from this route have a null reservation ID and never paint a stamp-map region, even when location verification succeeds and photos are present.
 - Unverified save accepts zero photos and never paints a map.
 - While an operation is running, all save and verification actions are disabled.
 

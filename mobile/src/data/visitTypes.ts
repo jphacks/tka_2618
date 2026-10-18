@@ -10,6 +10,7 @@ export type VisitVerification = {
 
 export type VisitRecord = {
   id: string;
+  reservationId: string | null;
   shopId: string;
   shopName: string;
   countryCode: string;

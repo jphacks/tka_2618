@@ -12,6 +12,7 @@ type StoredVisitPayload = {
 
 function isValidRecord(record: VisitRecord) {
   return typeof record?.id === 'string'
+    && (typeof record.reservationId === 'string' || record.reservationId === null)
     && typeof record.shopId === 'string'
     && typeof record.shopName === 'string'
     && typeof record.countryCode === 'string'

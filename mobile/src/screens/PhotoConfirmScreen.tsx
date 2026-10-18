@@ -34,6 +34,7 @@ export function PhotoConfirmScreen() {
     const visitedAt = new Date();
     const visit: VisitRecord = {
       id: `visit-${Date.now()}`,
+      reservationId: reservation.id,
       shopId: reservation.shopId ?? reservation.id,
       shopName: reservation.shopName,
       countryCode: reservation.countryCode,
