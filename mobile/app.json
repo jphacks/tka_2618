@@ -27,7 +27,6 @@
       "web"
     ],
     "plugins": [
-      "expo-status-bar",
       "expo-router",
       [
         "expo-location",
