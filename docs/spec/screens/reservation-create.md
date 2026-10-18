@@ -8,7 +8,7 @@ Optional route parameters are `shopId`, `shopName`, `countryCode`, `prefectureCo
 
 ## Saved Data
 
-Save the selected country, Japanese prefecture when the country is Japan, trimmed restaurant name, reservation date and time, notification preference, optional restaurant ID, optional information text, and optional image URL. The restaurant ID enables exact reservation-status matching in search results. The prefecture determines which region is painted on the Japan stamp map after a photo is recorded.
+Save the selected country, Japanese prefecture when the country is Japan, trimmed restaurant name, reservation date and time, optional restaurant ID, optional information text, and optional image URL. Save `notify` as `false` for compatibility with the existing reservation model. The restaurant ID enables exact reservation-status matching in search results. The prefecture determines which region is painted on the Japan stamp map after a photo is recorded.
 
 ## Behavior
 
@@ -16,7 +16,8 @@ Save the selected country, Japanese prefecture when the country is Japan, trimme
 - The save action remains disabled until a supported country and non-empty restaurant name are present, and until a prefecture is selected for Japan.
 - Saving adds the reservation to app-wide state and then calls `router.dismissTo('/reservations')`, so the user always lands on the reservation list where the new reservation is visible. The saving state is cleared on both success and failure.
 - The reservations stack declares `unstable_settings.initialRouteName = 'index'`, and the restaurant result screen opens this route with `{ withAnchor: true }`. Opening the form from another tab therefore places the reservation list underneath it, and no stale form remains in the reservations tab after saving.
-- Existing manual reservation creation, date selection, country selection, and notification controls remain available.
+- Existing manual reservation creation, date selection, and country selection remain available.
+- Do not display a reservation-notification control or claim that the app will send a notification.
 
 ## Implementation Rationale
 
@@ -26,4 +27,4 @@ Previously the form was pushed from the home tab into the reservations stack wit
 
 ## Self-Review
 
-Score: **97/100**. Route inputs, prefilling, saved fields, validation, compatibility, and navigation are explicit.
+Score: **99/100**. Route inputs, prefilling, saved fields, notification compatibility, visible controls, validation, and navigation are explicit.

@@ -24,7 +24,7 @@ type AppData = {
   visitedShops: VisitedShop[];
   // 食べた（記録した）国の国コード。地図を塗るのに使います
   visitedCountryCodes: Set<CountryCode>;
-  // 設定画面の「予約時間に通知する」
+  // 旧通知設定とのデータ互換性のため保持（現在は画面に表示しない）
   notificationsEnabled: boolean;
   pendingVisitPhoto: PendingVisitPhoto | null;
   addReservation: (reservation: Omit<Reservation, 'id'>) => Promise<void>;

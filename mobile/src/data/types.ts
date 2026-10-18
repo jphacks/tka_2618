@@ -53,7 +53,7 @@ export type Reservation = {
   dateTime: string; // 例: '2026-10-18T19:00'
   info?: string; // 例: '新宿駅 徒歩3分・ディナー 2,000〜3,000円'
   imageUrl?: string;
-  notify: boolean; // 予約時間に通知するか
+  notify: boolean; // 旧通知設定とのデータ互換性のため保持
   notificationId?: string;
 };
 
