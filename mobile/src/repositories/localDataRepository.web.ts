@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getWebItem, setWebItem } from './webStorage';
 
 import type { PendingVisitPhoto, Reservation, VisitedShop } from '../data/types';
 import { emptyLocalAppData, type LocalAppData } from './localDataRepository.types';
@@ -42,7 +42,7 @@ function isValidPayload(payload: StoredPayload) {
 }
 
 export async function loadLocalAppData(): Promise<LocalAppData> {
-  const stored = await AsyncStorage.getItem(STORAGE_KEY);
+  const stored = await getWebItem(STORAGE_KEY);
   if (!stored) return emptyLocalAppData;
   try {
     const payload = JSON.parse(stored) as StoredPayload;
@@ -61,7 +61,7 @@ export async function loadLocalAppData(): Promise<LocalAppData> {
 async function updateLocalAppData(update: (current: LocalAppData) => LocalAppData) {
   const next = update(await loadLocalAppData());
   const payload: StoredPayload = { version: SCHEMA_VERSION, ...next };
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  await setWebItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
 export function saveReservation(reservation: Reservation) {

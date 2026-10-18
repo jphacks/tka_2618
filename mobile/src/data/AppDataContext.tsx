@@ -2,7 +2,7 @@
 // どの画面からでも useAppData() で読み書きできます。
 // 例: 「予約を作成」で保存 → 「予約したお店」の一覧にすぐ出る
 //
-// iOS / Android は SQLite、Web は AsyncStorage に保存します。
+// iOS / Android は SQLite、Web は IndexedDB（使えない場合は AsyncStorage）に保存します。
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { clearVisits } from '../repositories/visitRepository';
