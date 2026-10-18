@@ -31,7 +31,7 @@ For valid input, display in this order:
 - `記録する` persists a verified visit record using the reservation ID, the reservation's restaurant ID when available, shop name, country, Japanese prefecture when applicable, captured photo URI, trimmed memo, and current timestamp. Its verification mode is `photo`.
 - The same action adds the lightweight visited-shop entry used by the home screen.
 - Disable both actions while persistence is running. If persistence fails, remain on this screen and show `訪問記録を保存できませんでした。`.
-- After persistence succeeds, clear the pending photo and replace the current route with `/map`. The saved reservation ID and photo make the visit eligible to paint its country and, for Japan, its prefecture black.
+- After persistence and pending-photo cleanup succeed, replace the current route with `/visit-complete?visitId={saved visit ID}`. The saved reservation ID and photo make the visit eligible to paint its country and, for Japan, its prefecture black.
 - A captured photo is temporary until `記録する` succeeds. It is not used as a fallback for another reservation.
 - Pending photo metadata persists across application restarts. The image remains in the app-owned file directory and only its URI is stored in the local database.
 

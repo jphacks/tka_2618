@@ -42,7 +42,7 @@ The world view is initially selected. Switching views does not navigate or disca
 
 - Pressing the map tab always opens this screen.
 - Successful visit registration opens this screen.
-- Successful photo confirmation from a reservation opens this screen and immediately reflects the saved country and Japanese prefecture stamp.
+- The visit completion screen's `地図を見る` action opens this screen and immediately reflects the saved country and Japanese prefecture stamp.
 - The screen contains no restaurant-search navigation. Restaurant search starts from the home screen.
 
 ## Self-Review
