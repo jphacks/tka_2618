@@ -93,10 +93,23 @@ export function StampMapScreen() {
     });
     return counts;
   }, [stampVisits]);
+  // 地域ごとに最も新しい訪問の1枚目の写真で塗る。
+  const [worldPhotos, japanPhotos] = useMemo(() => {
+    const world = new Map<string, string>();
+    const japan = new Map<string, string>();
+    [...stampVisits]
+      .sort((left, right) => left.visitedAt.localeCompare(right.visitedAt))
+      .forEach(visit => {
+        world.set(visit.countryCode, visit.photoUris[0]);
+        if (visit.countryCode === 'JP' && visit.prefectureCode) japan.set(visit.prefectureCode, visit.photoUris[0]);
+      });
+    return [world, japan];
+  }, [stampVisits]);
 
   const shapes = mode === 'world' ? worldMapShapes : japanMapShapes;
   const viewBox = mode === 'world' ? worldMapViewBox : japanMapViewBox;
   const counts = mode === 'world' ? worldCounts : japanCounts;
+  const photos = mode === 'world' ? worldPhotos : japanPhotos;
   const visitedRegions = shapes.filter(shape => (counts.get(shape.code) ?? 0) > 0);
   const progressLabel = mode === 'world' ? '訪問国数' : '訪問都道府県数';
   const progressCurrent = mode === 'world'
@@ -134,9 +147,9 @@ export function StampMapScreen() {
           <View style={styles.notice}><Text accessibilityRole="alert" style={styles.error}>{error}</Text><Pressable accessibilityRole="button" onPress={() => setAttempt(value => value + 1)} style={styles.retry}><Text>再読み込み</Text></Pressable></View>
         ) : (
           <>
-            <StampMap shapes={shapes} viewBox={viewBox} visitCounts={counts} selectedCode={selected?.code ?? null} onSelect={setSelected} />
+            <StampMap shapes={shapes} viewBox={viewBox} visitCounts={counts} visitPhotos={photos} selectedCode={selected?.code ?? null} onSelect={setSelected} />
             <View style={styles.legend}>
-              <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.visitedSwatch]} /><Text style={styles.legendText}>訪問済み</Text></View>
+              <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.visitedSwatch]} /><Text style={styles.legendText}>訪問済み（写真で表示）</Text></View>
               <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.unvisitedSwatch]} /><Text style={styles.legendText}>まだ未訪問</Text></View>
               <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.selectedSwatch]} /><Text style={styles.legendText}>選択中</Text></View>
             </View>

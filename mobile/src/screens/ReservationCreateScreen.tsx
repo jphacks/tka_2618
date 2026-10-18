@@ -1,5 +1,5 @@
 // 予約を作成する画面です（Figma の「予約を作成」）。
-// 国・お店の名前・予約日時・通知を入力して「予約を保存」で一覧に戻ります。
+// 国・お店の名前・予約日時を入力して「予約を保存」で一覧に戻ります。
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -9,7 +9,6 @@ import { BottomSheet, SheetOption } from '../components/BottomSheet';
 import { Button } from '../components/Button';
 import { FormField, SelectField, TextField } from '../components/FormField';
 import { Header } from '../components/Header';
-import { Toggle } from '../components/Toggle';
 import { colors, fonts, spacing } from '../constants/theme';
 import { useAppData } from '../data/AppDataContext';
 import { dummyCountries } from '../data/dummy';
@@ -51,7 +50,6 @@ export function ReservationCreateScreen() {
   const [shopName, setShopName] = useState(params.shopName ?? '');
   const [date, setDate] = useState(dates[0]);
   const [time, setTime] = useState('19:00');
-  const [notify, setNotify] = useState(true);
   const [openSheet, setOpenSheet] = useState<'country' | 'prefecture' | 'dateTime' | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -74,14 +72,16 @@ export function ReservationCreateScreen() {
         prefectureCode: country.code === 'JP' ? prefecture?.code : undefined,
         shopName: shopName.trim(),
         dateTime,
-        notify,
+        notify: false,
         info: params.info,
         imageUrl: params.imageUrl ?? country.imageUrl,
       });
-      router.back();
+      // どのタブから開いても、保存した予約が見える予約一覧へ戻る。
+      router.dismissTo('/reservations');
     } catch {
-      setIsSaving(false);
       setSaveError('予約を保存できませんでした。もう一度お試しください。');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -129,13 +129,6 @@ export function ReservationCreateScreen() {
             />
           </FormField>
 
-          <View style={styles.notifyRow}>
-            <View style={styles.notifyText}>
-              <Text style={styles.notifyTitle}>予約時間に通知する</Text>
-              <Text style={styles.notifyNote}>時間になったらお知らせします</Text>
-            </View>
-            <Toggle value={notify} onValueChange={setNotify} accessibilityLabel="予約時間に通知する" />
-          </View>
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: spacing.screen }]}>
@@ -219,24 +212,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.screen,
     gap: spacing.lg,
-  },
-  notifyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  notifyText: {
-    flex: 1,
-    gap: 4,
-  },
-  notifyTitle: {
-    ...fonts.bodyBold,
-    color: colors.text,
-  },
-  notifyNote: {
-    ...fonts.caption,
-    color: colors.textSecondary,
   },
   footer: {
     paddingHorizontal: spacing.screen,

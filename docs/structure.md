@@ -29,6 +29,7 @@ tka_2618/
 │   ├── scripts/                 # Dependency and security scripts
 │   └── tests/                   # Mobile-side automated tests
 └── docs/
+    ├── assets/                  # README demo video and preview image
     ├── structure.md             # This project map
     └── spec/                    # Specification documents by concern
         ├── components/

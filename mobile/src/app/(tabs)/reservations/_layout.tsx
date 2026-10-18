@@ -3,6 +3,11 @@
 
 import { Stack } from 'expo-router/stack';
 
+// 他のタブから「予約を作成」を開いたときも、下に予約一覧を置いて戻れるようにします。
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
+
 export default function ReservationsStackLayout() {
   return <Stack screenOptions={{ headerShown: false }} />;
 }

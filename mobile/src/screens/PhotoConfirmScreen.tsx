@@ -75,7 +75,7 @@ export function PhotoConfirmScreen() {
         memo: memo.trim() || undefined,
       });
       await clearPendingVisitPhoto();
-      router.replace('/map');
+      router.replace({ pathname: '/visit-complete', params: { visitId: visit.id } });
     } catch {
       setIsSaving(false);
       setSaveError('訪問記録を保存できませんでした。');

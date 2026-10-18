@@ -5,7 +5,7 @@
 Persist user-created reservations, visit summaries, pending photo metadata, settings, and verified visit records across application restarts.
 
 - iOS and Android use `expo-sqlite` with database file `jphack.db`.
-- Web uses AsyncStorage because Expo SQLite web support is experimental and requires additional cross-origin isolation configuration.
+- Web uses an IndexedDB key-value store (`repositories/webStorage.ts`) because Expo SQLite web support is experimental and requires additional cross-origin isolation configuration.
 - Screens and providers import a common repository contract and must not branch on the platform.
 - Photo binary data remains in the app-owned file directory. The database stores only photo URIs.
 
@@ -39,7 +39,13 @@ Store application preferences as key-value rows. The initial notification settin
 
 ## Web Storage
 
-Web repositories serialize the same models to versioned AsyncStorage payloads. Malformed or unsupported payloads return safe defaults instead of crashing the app.
+Web repositories serialize the same models to versioned JSON string payloads under the same keys as before (`@jphack/local-app-data/v1`, `@jphack/visits/v1`). Malformed or unsupported payloads return safe defaults instead of crashing the app.
+
+- Payloads are stored in IndexedDB database `jphack-local-storage`, object store `key_value`, through `getWebItem`, `setWebItem`, and `removeWebItem` in `repositories/webStorage.ts`.
+- On web, captured photos are `data:` URIs containing base64 image data, so one visit can add several megabytes across the visit record, visited-shop entry, and pending photo. AsyncStorage on web is backed by `localStorage`, whose roughly 5 MB per-origin quota made `訪問記録を保存できませんでした。` appear after one or two visits. IndexedDB has a much larger quota.
+- When a key is missing from IndexedDB, `getWebItem` reads the same key from AsyncStorage, copies it into IndexedDB, and removes it from AsyncStorage to free the `localStorage` quota.
+- When IndexedDB is unavailable or cannot be opened, all three functions fall back to AsyncStorage.
+- The location catalog cache stays on AsyncStorage because its payloads are small.
 
 ## Migration
 

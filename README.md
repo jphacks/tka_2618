@@ -1,9 +1,10 @@
 # 食べ図（たべず）
 
-**国を選んで、その国の料理を国内で食べに行く。食べた国が地図に塗られていく、「食べて旅する」アプリ。**
+## デモ動画
 
-<!-- TODO：デモ動画のサムネイル画像と YouTube の URL に差し替える（下はテンプレートのサンプルのまま） -->
-[![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2026/07/IMG_5316.png)](https://www.youtube.com/watch?v=piaNsc6ilBI)
+[![店舗検索から予約へ進むアプリのデモ動画](docs/assets/app-demo-preview.png)](docs/assets/app-demo.mp4)
+
+上の画像をクリックすると、店舗検索や予約操作の画面収録を再生できます。
 
 ## 製品概要
 ### 背景(製品開発のきっかけ、課題等）

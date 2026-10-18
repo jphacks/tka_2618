@@ -21,7 +21,8 @@ The world view is initially selected. Switching views does not navigate or disca
 - Only visits that are verified, linked to a reservation, and contain at least one photo contribute to map fills and visit counts.
 - World map regions use uppercase ISO country codes.
 - Japan map regions use the same prefecture codes returned by the backend.
-- Unvisited fill is white, visited fill is black, and borders are grey.
+- Unvisited fill is white and borders are grey. Visited regions show the first photo of their most recent eligible visit (latest `visitedAt`), clipped to the region shape; black is the fallback when the photo cannot be shown. In Japan mode, only visits with a matching prefecture code supply prefecture photos.
+- The legend labels the visited swatch `訪問済み（写真で表示）`.
 - The selected region keeps its fill and receives a gold border.
 - Count each painted region once even when it has multiple eligible visits.
 - In world mode, show `訪問国数` and `{painted target-country count} / {target-country count}`. Target countries are the country codes returned by `/api/countries`, including unsupported cuisines; use the saved country catalog when offline. If neither source is available, fall back to country-coded regions in the world map data.
@@ -41,7 +42,7 @@ The world view is initially selected. Switching views does not navigate or disca
 
 - Pressing the map tab always opens this screen.
 - Successful visit registration opens this screen.
-- Successful photo confirmation from a reservation opens this screen and immediately reflects the saved country and Japanese prefecture stamp.
+- The visit completion screen's `地図を見る` action opens this screen and immediately reflects the saved country and Japanese prefecture stamp.
 - The screen contains no restaurant-search navigation. Restaurant search starts from the home screen.
 
 ## Self-Review

@@ -1,8 +1,5 @@
 // 設定画面です（Figma の「設定」）。
 //
-// ※ 通知は見た目だけの仮実装です（オン・オフを覚えるだけで、まだ通知は届きません）。
-//    本物にするときは expo-notifications を入れて、予約時間に通知を予約します。
-
 import { useState, type ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ApiStatus } from '../components/ApiStatus';
@@ -10,25 +7,15 @@ import { BottomSheet } from '../components/BottomSheet';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Header } from '../components/Header';
 import { SettingsItem } from '../components/SettingsItem';
-import { Toggle } from '../components/Toggle';
 import { colors, fonts, spacing } from '../constants/theme';
 import { useAppData } from '../data/AppDataContext';
 import { dummyPhotos } from '../data/dummy';
 
 export function SettingsScreen() {
-  const { notificationsEnabled, setNotificationsEnabled, resetVisitedShops } = useAppData();
+  const { resetVisitedShops } = useAppData();
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [openSheet, setOpenSheet] = useState<'about' | 'credits' | null>(null);
   const [saveError, setSaveError] = useState('');
-
-  const changeNotifications = async (enabled: boolean) => {
-    setSaveError('');
-    try {
-      await setNotificationsEnabled(enabled);
-    } catch {
-      setSaveError('通知設定を保存できませんでした。');
-    }
-  };
 
   const resetRecords = async () => {
     setSaveError('');
@@ -45,19 +32,6 @@ export function SettingsScreen() {
     <View style={styles.screen}>
       <Header title="設定" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Section title="通知">
-          <SettingsItem
-            label="予約時間に通知する"
-            right={
-              <Toggle
-                value={notificationsEnabled}
-                onValueChange={enabled => void changeNotifications(enabled)}
-                accessibilityLabel="予約時間に通知する"
-              />
-            }
-          />
-        </Section>
-
         <Section title="記録">
           <SettingsItem label="記録をリセット" onPress={() => setConfirmingReset(true)} />
         </Section>

@@ -2,7 +2,7 @@
 // どの画面からでも useAppData() で読み書きできます。
 // 例: 「予約を作成」で保存 → 「予約したお店」の一覧にすぐ出る
 //
-// iOS / Android は SQLite、Web は AsyncStorage に保存します。
+// iOS / Android は SQLite、Web は IndexedDB（使えない場合は AsyncStorage）に保存します。
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { clearVisits } from '../repositories/visitRepository';
@@ -24,7 +24,7 @@ type AppData = {
   visitedShops: VisitedShop[];
   // 食べた（記録した）国の国コード。地図を塗るのに使います
   visitedCountryCodes: Set<CountryCode>;
-  // 設定画面の「予約時間に通知する」
+  // 旧通知設定とのデータ互換性のため保持（現在は画面に表示しない）
   notificationsEnabled: boolean;
   pendingVisitPhoto: PendingVisitPhoto | null;
   addReservation: (reservation: Omit<Reservation, 'id'>) => Promise<void>;

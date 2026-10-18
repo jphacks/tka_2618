@@ -2,13 +2,15 @@
 
 ## Interface
 
-The component receives map shapes, an SVG view box, visit counts keyed by region code, the selected region code, and an `onSelect` callback. Selecting a region passes its complete map shape to the callback.
+The component receives map shapes, an SVG view box, visit counts keyed by region code, visit photo URIs keyed by region code (`visitPhotos`), the selected region code, and an `onSelect` callback. Selecting a region passes its complete map shape to the callback.
 
 ## Presentation
 
 - The frame width is the window width minus 32 pixels, capped at 768 pixels. The frame height equals the width, capped at 520 pixels. The frame has a `#f2f2f0` background, 16-pixel corner radius, no inner padding, and clips its content.
 - At zoom level 1 the whole map is centered inside the frame. The supplied view box is widened or heightened to the frame's aspect ratio so the map keeps its own aspect ratio. An invalid view box falls back to `0 0 1.5 1`.
-- Fill visited regions black and unvisited regions white.
+- Fill unvisited regions white and visited regions black.
+- For each visited region with a photo URI, draw that photo over the black fill, clipped to the region shape. The photo covers the region's bounding box with `preserveAspectRatio="xMidYMid slice"` (centered, cropped, never stretched). If the photo cannot be loaded, the black fill remains visible. Bounding boxes come from `calculateMapShapeBounds` in `utils/mapPathBounds.ts`; a region whose path cannot be measured keeps the black fill.
+- Photo regions are drawn after all region paths and receive their own border path on top, so photos never hide region borders or the selected-region stroke. Pressing a photo region selects that region.
 - Draw the selected region with a 2.5-pixel gold (`#c69214`) stroke. Other regions use a 0.6-pixel grey (`#929b98`) stroke. Strokes use `vector-effect: non-scaling-stroke`, so their on-screen width stays constant at every zoom level.
 
 ## Zoom and Pan
@@ -42,6 +44,7 @@ The component receives map shapes, an SVG view box, visit counts keyed by region
 - Zooming changes the SVG `viewBox` instead of scaling the view with a transform. A scaled view is rasterized at its original size and becomes blurry, while a new `viewBox` keeps borders crisp at every zoom level. Region paths are memoized so a camera change only updates the `viewBox`.
 - `react-native-gesture-handler` was added because React Native's responder system cannot reliably separate pinch, map drag, and page scrolling inside a `ScrollView`. It is bundled with Expo Go, so no development build is required.
 - Zoom buttons are provided in addition to gestures so the feature is reachable on Web, with assistive technologies, and without multi-touch.
+- Visited regions show visit photos instead of plain black so the map works as a memory album. The black fill stays underneath as a fallback for missing or deleted photo files. On Web, the photo overlay is `aria-hidden` and keyboard selection stays on the underlying region path.
 - Camera math lives in `StampMap.types.ts`, and the camera state and buttons live in `StampMapControls.tsx`, so the native and Web implementations share one behavior.
 
 ## Self-Review

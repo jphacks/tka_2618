@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getWebItem, removeWebItem, setWebItem } from './webStorage';
 
 import type { VisitRecord } from '../data/visitTypes';
 
@@ -29,7 +29,7 @@ function isValidRecord(record: VisitRecord) {
 }
 
 export async function listVisits(): Promise<VisitRecord[]> {
-  const stored = await AsyncStorage.getItem(STORAGE_KEY);
+  const stored = await getWebItem(STORAGE_KEY);
   if (!stored) return [];
   try {
     const payload = JSON.parse(stored) as StoredVisitPayload;
@@ -47,7 +47,7 @@ export async function getVisitById(id: string): Promise<VisitRecord | null> {
 
 async function writeVisits(records: VisitRecord[]) {
   const payload: StoredVisitPayload = { version: SCHEMA_VERSION, records };
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  await setWebItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
 export async function saveVisit(record: VisitRecord) {
@@ -57,5 +57,5 @@ export async function saveVisit(record: VisitRecord) {
 }
 
 export async function clearVisits() {
-  await AsyncStorage.removeItem(STORAGE_KEY);
+  await removeWebItem(STORAGE_KEY);
 }

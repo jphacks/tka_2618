@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Persist visit records locally without requiring a backend account or network connection after registration. Use SQLite on iOS and Android and versioned AsyncStorage on web.
+Persist visit records locally without requiring a backend account or network connection after registration. Use SQLite on iOS and Android and a versioned IndexedDB payload on web (see the local database specification).
 
 ## Contract
 
@@ -12,7 +12,7 @@ Persist visit records locally without requiring a backend account or network con
 - Malformed or unsupported stored payloads return an empty list instead of crashing the app.
 - Records without a valid string or null `reservationId` are treated as malformed and do not contribute to stamp progress.
 
-The native implementation uses the `visit_records` and `visit_photos` tables defined by the local database specification. The web implementation uses one versioned AsyncStorage key containing the records array. Validate parsed web values field by field without TypeScript `any` or `unknown` annotations in project source.
+The native implementation uses the `visit_records` and `visit_photos` tables defined by the local database specification. The web implementation uses one versioned key in the IndexedDB key-value store (`webStorage.ts`) containing the records array. Validate parsed web values field by field without TypeScript `any` or `unknown` annotations in project source.
 
 On native platforms, import valid records from the former AsyncStorage key once, then remove that key only after the database marks migration success.
 
