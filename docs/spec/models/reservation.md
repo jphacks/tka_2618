@@ -5,6 +5,7 @@
 - `id`: unique reservation record ID
 - `shopId`: optional restaurant search-result ID
 - `countryCode`: supported cuisine-origin country code
+- `prefectureCode`: optional Japanese prefecture code; required by the form when `countryCode` is `JP`
 - `shopName`: restaurant display name
 - `dateTime`: local reservation date and time in `YYYY-MM-DDTHH:mm` format
 - `info`: optional restaurant description or address

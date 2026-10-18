@@ -10,6 +10,7 @@ import { ExternalLinkIcon } from '../components/Icons';
 import { colors, fonts, radius, spacing } from '../constants/theme';
 import { findCountry, getNearbyRestaurants } from '../data/api';
 import { useAppData } from '../data/AppDataContext';
+import { japanMapShapes } from '../data/japanMapShapes';
 import type { Restaurant } from '../data/visitTypes';
 import { formatDateTime } from '../utils/date';
 
@@ -109,12 +110,16 @@ export function ShopMapScreen() {
   const openReservationForm = () => {
     if (!selected) return;
     const info = [selected.genre, selected.address].filter(value => value !== null).join('・');
+    const prefectureCode = country.code === 'JP'
+      ? japanMapShapes.find(prefecture => selected.address?.includes(prefecture.name))?.code
+      : undefined;
     router.push({
       pathname: '/reservations/new',
       params: {
         shopId: selected.id,
         shopName: selected.name,
         countryCode: country.code,
+        ...(prefectureCode ? { prefectureCode } : {}),
         ...(selected.image_url ? { imageUrl: selected.image_url } : {}),
         ...(info ? { info } : {}),
       },

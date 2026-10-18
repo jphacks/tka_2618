@@ -25,7 +25,7 @@ Represent one restaurant visit, its user-authored content, and the evidence used
 
 | Field | Type | Rule |
 |---|---|---|
-| `mode` | `'location'` | Verification source. |
+| `mode` | `'location' \| 'photo'` | Verification source. Reservation photo confirmation uses `photo`; the nearby visit flow uses `location`. |
 | `status` | `'verified' \| 'unverified'` | Only `verified` paints a map. |
 | `distanceMeters` | `number \| null` | Rounded distance from the restaurant; `null` when no check completed. |
 | `accuracyMeters` | `number \| null` | Rounded device accuracy; `null` when no check completed. |
@@ -36,6 +36,7 @@ Exact device latitude and longitude must not be persisted.
 
 - Every verified record paints `countryCode` on the world map.
 - A verified record with `countryCode === 'JP'` and a non-null `prefectureCode` also paints that prefecture on the Japan map.
+- Saving a photo from the reservation flow creates a verified record with `mode === 'photo'`, one photo URI, and null distance and accuracy values.
 - Unverified records never paint either map.
 - Multiple visits to the same region keep the region painted and increment its displayed visit count.
 

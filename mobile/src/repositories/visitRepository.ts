@@ -21,7 +21,7 @@ function isValidRecord(record: VisitRecord) {
     && record.photoUris.every(uri => typeof uri === 'string')
     && typeof record.memo === 'string'
     && typeof record.visitedAt === 'string'
-    && record.verification?.mode === 'location'
+    && (record.verification?.mode === 'location' || record.verification?.mode === 'photo')
     && (record.verification.status === 'verified' || record.verification.status === 'unverified')
     && (typeof record.verification.distanceMeters === 'number' || record.verification.distanceMeters === null)
     && (typeof record.verification.accuracyMeters === 'number' || record.verification.accuracyMeters === null);

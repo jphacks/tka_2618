@@ -7,12 +7,16 @@ import { FormField, TextField } from '../components/FormField';
 import { Header } from '../components/Header';
 import { colors, fonts, radius, spacing } from '../constants/theme';
 import { useAppData } from '../data/AppDataContext';
+import type { VisitRecord } from '../data/visitTypes';
+import { saveVisit } from '../repositories/visitRepository';
 import { todayString } from '../utils/date';
 
 export function PhotoConfirmScreen() {
   const { reservationId } = useLocalSearchParams<{ reservationId: string }>();
   const { reservations, addVisitedShop, pendingVisitPhoto, clearPendingVisitPhoto } = useAppData();
   const [memo, setMemo] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const reservation = reservations.find(item => item.id === reservationId);
   const photoUri = pendingVisitPhoto?.reservationId === reservationId ? pendingVisitPhoto.uri : undefined;
@@ -23,17 +27,44 @@ export function PhotoConfirmScreen() {
     router.replace({ pathname: '/camera', params: { reservationId: reservation.id } });
   };
 
-  const record = () => {
-    if (!reservation || !photoUri) return;
-    addVisitedShop({
-      name: reservation.shopName,
+  const record = async () => {
+    if (!reservation || !photoUri || isSaving) return;
+    setIsSaving(true);
+    setSaveError('');
+    const visitedAt = new Date();
+    const visit: VisitRecord = {
+      id: `visit-${Date.now()}`,
+      shopId: reservation.shopId ?? reservation.id,
+      shopName: reservation.shopName,
       countryCode: reservation.countryCode,
-      visitedAt: todayString(),
-      imageUrl: photoUri,
-      memo: memo.trim() || undefined,
-    });
-    clearPendingVisitPhoto();
-    router.replace('/map');
+      prefectureCode: reservation.countryCode === 'JP' ? reservation.prefectureCode ?? null : null,
+      address: reservation.info ?? null,
+      photoUris: [photoUri],
+      memo: memo.trim(),
+      visitedAt: visitedAt.toISOString(),
+      verification: {
+        mode: 'photo',
+        status: 'verified',
+        distanceMeters: null,
+        accuracyMeters: null,
+      },
+    };
+
+    try {
+      await saveVisit(visit);
+      addVisitedShop({
+        name: reservation.shopName,
+        countryCode: reservation.countryCode,
+        visitedAt: todayString(visitedAt),
+        imageUrl: photoUri,
+        memo: memo.trim() || undefined,
+      });
+      clearPendingVisitPhoto();
+      router.replace('/map');
+    } catch {
+      setIsSaving(false);
+      setSaveError('訪問記録を保存できませんでした。');
+    }
   };
 
   return (
@@ -64,8 +95,9 @@ export function PhotoConfirmScreen() {
             </FormField>
           </ScrollView>
           <View style={styles.footer}>
-            <Button title="写真を撮り直す" variant="secondary" onPress={retake} />
-            <Button title="記録する" onPress={record} />
+            {saveError ? <Text accessibilityRole="alert" style={styles.saveError}>{saveError}</Text> : null}
+            <Button title="写真を撮り直す" variant="secondary" onPress={retake} disabled={isSaving} />
+            <Button title={isSaving ? '保存しています…' : '記録する'} onPress={() => void record()} disabled={isSaving} />
           </View>
         </KeyboardAvoidingView>
       )}
@@ -103,5 +135,10 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     paddingTop: spacing.sm,
     gap: spacing.sm,
+  },
+  saveError: {
+    ...fonts.caption,
+    color: '#b33030',
+    textAlign: 'center',
   },
 });

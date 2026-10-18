@@ -13,6 +13,7 @@ import { Toggle } from '../components/Toggle';
 import { colors, fonts, spacing } from '../constants/theme';
 import { useAppData } from '../data/AppDataContext';
 import { dummyCountries } from '../data/dummy';
+import { japanMapShapes } from '../data/japanMapShapes';
 import { findCountry } from '../data/api';
 import type { CountryCode } from '../data/types';
 import { formatDay, formatDateTimeInput, todayString } from '../utils/date';
@@ -36,29 +37,36 @@ export function ReservationCreateScreen() {
     shopId?: string;
     shopName?: string;
     countryCode?: string;
+    prefectureCode?: string;
     imageUrl?: string;
     info?: string;
   }>();
   const insets = useSafeAreaInsets();
   const dates = useMemo(() => upcomingDates(), []);
   const initialCountry = findCountry(params.countryCode);
+  const initialPrefecture = japanMapShapes.find(item => item.code === params.prefectureCode);
 
   const [countryCode, setCountryCode] = useState<CountryCode | null>(initialCountry?.code ?? null);
+  const [prefectureCode, setPrefectureCode] = useState(initialPrefecture?.code ?? null);
   const [shopName, setShopName] = useState(params.shopName ?? '');
   const [date, setDate] = useState(dates[0]);
   const [time, setTime] = useState('19:00');
   const [notify, setNotify] = useState(true);
-  const [openSheet, setOpenSheet] = useState<'country' | 'dateTime' | null>(null);
+  const [openSheet, setOpenSheet] = useState<'country' | 'prefecture' | 'dateTime' | null>(null);
 
   const country = findCountry(countryCode ?? undefined);
+  const prefecture = japanMapShapes.find(item => item.code === prefectureCode);
   const dateTime = `${date}T${time}`;
-  const canSave = country !== undefined && shopName.trim().length > 0;
+  const canSave = country !== undefined
+    && shopName.trim().length > 0
+    && (country.code !== 'JP' || prefecture !== undefined);
 
   const save = () => {
-    if (!country) return;
+    if (!country || (country.code === 'JP' && !prefecture)) return;
     addReservation({
       shopId: params.shopId,
       countryCode: country.code,
+      prefectureCode: country.code === 'JP' ? prefecture?.code : undefined,
       shopName: shopName.trim(),
       dateTime,
       notify,
@@ -81,6 +89,17 @@ export function ReservationCreateScreen() {
               onPress={() => setOpenSheet('country')}
             />
           </FormField>
+
+          {country?.code === 'JP' && (
+            <FormField label="都道府県">
+              <SelectField
+                accessibilityLabel="都道府県を選択"
+                placeholder="都道府県を選択"
+                value={prefecture?.name}
+                onPress={() => setOpenSheet('prefecture')}
+              />
+            </FormField>
+          )}
 
           <FormField label="お店の名前">
             <TextField
@@ -112,7 +131,11 @@ export function ReservationCreateScreen() {
 
         <View style={[styles.footer, { paddingBottom: spacing.screen }]}>
           <Button title="予約を保存" onPress={save} disabled={!canSave} />
-          {!canSave && <Text style={styles.hint}>国とお店の名前を入力すると保存できます</Text>}
+          {!canSave && (
+            <Text style={styles.hint}>
+              {country?.code === 'JP' ? '都道府県とお店の名前を入力すると保存できます' : '国とお店の名前を入力すると保存できます'}
+            </Text>
+          )}
         </View>
       </KeyboardAvoidingView>
 
@@ -125,6 +148,23 @@ export function ReservationCreateScreen() {
               selected={item.code === countryCode}
               onPress={() => {
                 setCountryCode(item.code);
+                if (item.code !== 'JP') setPrefectureCode(null);
+                setOpenSheet(null);
+              }}
+            />
+          ))}
+        </ScrollView>
+      </BottomSheet>
+
+      <BottomSheet visible={openSheet === 'prefecture'} title="都道府県を選択" onClose={() => setOpenSheet(null)}>
+        <ScrollView contentContainerStyle={styles.optionList}>
+          {japanMapShapes.map(item => (
+            <SheetOption
+              key={item.code}
+              label={item.name}
+              selected={item.code === prefectureCode}
+              onPress={() => {
+                setPrefectureCode(item.code);
                 setOpenSheet(null);
               }}
             />

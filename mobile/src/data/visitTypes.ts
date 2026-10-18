@@ -1,4 +1,4 @@
-export type VerificationMode = 'location';
+export type VerificationMode = 'location' | 'photo';
 export type VerificationStatus = 'verified' | 'unverified';
 
 export type VisitVerification = {

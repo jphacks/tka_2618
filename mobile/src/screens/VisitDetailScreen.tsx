@@ -61,7 +61,7 @@ export function VisitDetailScreen() {
           <Text style={styles.date}>{new Date(visit.visitedAt).toLocaleString('ja-JP')}</Text>
           {visit.address && <Text style={styles.address}>{visit.address}</Text>}
           <Text style={[styles.badge, verified ? styles.verifiedBadge : styles.unverifiedBadge]}>
-            {verified ? '現在地で確認済み' : '未確認の記録'}
+            {verified ? (visit.verification.mode === 'photo' ? '写真で確認済み' : '現在地で確認済み') : '未確認の記録'}
           </Text>
         </View>
 
