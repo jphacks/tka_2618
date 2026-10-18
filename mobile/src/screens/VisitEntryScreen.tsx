@@ -59,6 +59,7 @@ export function VisitEntryScreen() {
   const persist = async (verification: VisitVerification, photos = photoUris) => {
     const record: VisitRecord = {
       id: `${shop.id}-${Date.now()}`,
+      reservationId: null,
       shopId: shop.id,
       shopName: shop.name,
       countryCode: shop.countryCode,

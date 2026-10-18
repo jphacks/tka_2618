@@ -12,6 +12,7 @@ type StoredVisitPayload = {
 
 function isValidRecord(record: VisitRecord) {
   return typeof record?.id === 'string'
+    && (typeof record.reservationId === 'string' || record.reservationId === null)
     && typeof record.shopId === 'string'
     && typeof record.shopName === 'string'
     && typeof record.countryCode === 'string'
@@ -53,4 +54,8 @@ export async function saveVisit(record: VisitRecord) {
   const visits = await listVisits();
   const next = [record, ...visits.filter(item => item.id !== record.id)];
   await writeVisits(next);
+}
+
+export async function clearVisits() {
+  await AsyncStorage.removeItem(STORAGE_KEY);
 }

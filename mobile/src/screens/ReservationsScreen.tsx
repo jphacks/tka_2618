@@ -12,11 +12,52 @@ import { colors, fonts, spacing } from '../constants/theme';
 import { useAppData } from '../data/AppDataContext';
 import { findCountry } from '../data/api';
 import type { Reservation } from '../data/types';
+import { captureVisitPhoto } from '../services/visitPhotos';
 
 export function ReservationsScreen() {
-  const { reservations, removeReservation } = useAppData();
+  const { reservations, removeReservation, setPendingVisitPhoto } = useAppData();
   // 削除しようとしている予約（確認ダイアログを出している間だけ入る）
   const [deleting, setDeleting] = useState<Reservation | null>(null);
+  const [deleteError, setDeleteError] = useState('');
+  const [capturingReservationId, setCapturingReservationId] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState('');
+
+  const takePhoto = async (reservation: Reservation) => {
+    if (capturingReservationId) return;
+    setCapturingReservationId(reservation.id);
+    setPhotoError('');
+
+    const result = await captureVisitPhoto();
+    if (result.status === 'captured') {
+      try {
+        await setPendingVisitPhoto({ reservationId: reservation.id, uri: result.uri });
+        setCapturingReservationId(null);
+        router.push({
+          pathname: '/reservations/confirm',
+          params: { reservationId: reservation.id },
+        });
+      } catch {
+        setCapturingReservationId(null);
+        setPhotoError('撮影した写真を一時保存できませんでした。もう一度お試しください。');
+      }
+      return;
+    }
+
+    setCapturingReservationId(null);
+    setPhotoError(result.status === 'cancelled' ? '撮影をキャンセルしました。' : result.message);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setDeleteError('');
+    try {
+      await removeReservation(deleting.id);
+      setDeleting(null);
+    } catch {
+      setDeleting(null);
+      setDeleteError('予約を削除できませんでした。もう一度お試しください。');
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -32,13 +73,18 @@ export function ReservationsScreen() {
           </Text>
         )}
 
+        {deleteError ? <Text accessibilityRole="alert" style={styles.error}>{deleteError}</Text> : null}
+        {photoError ? <Text accessibilityRole="alert" style={styles.error}>{photoError}</Text> : null}
+
         {reservations.map(reservation => (
           <ReservationCard
             key={reservation.id}
             reservation={reservation}
             country={findCountry(reservation.countryCode)}
-            onPressPhoto={item => router.push(`/camera?reservationId=${item.id}`)}
+            onPressPhoto={item => void takePhoto(item)}
             onPressDelete={setDeleting}
+            isCapturing={capturingReservationId === reservation.id}
+            actionsDisabled={capturingReservationId !== null}
           />
         ))}
       </ScrollView>
@@ -49,10 +95,7 @@ export function ReservationsScreen() {
         message="削除すると元に戻せません"
         confirmLabel="削除する"
         onCancel={() => setDeleting(null)}
-        onConfirm={() => {
-          if (deleting) removeReservation(deleting.id);
-          setDeleting(null);
-        }}
+        onConfirm={() => void confirmDelete()}
       />
     </View>
   );
@@ -76,5 +119,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xl,
+  },
+  error: {
+    ...fonts.caption,
+    color: '#b33030',
+    textAlign: 'center',
   },
 });

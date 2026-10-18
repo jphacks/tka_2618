@@ -21,7 +21,7 @@ tka_2618/
 │   │   ├── components/          # Reusable UI components
 │   │   ├── constants/           # Theme and navigation constants
 │   │   ├── data/                # Data types, API clients, and fixtures
-│   │   ├── repositories/        # Local persistence implementations
+│   │   ├── repositories/        # SQLite/native and AsyncStorage/web persistence
 │   │   ├── providers/           # App-wide state providers
 │   │   ├── services/            # Location verification and photo services
 │   │   └── screens/             # Screen implementations

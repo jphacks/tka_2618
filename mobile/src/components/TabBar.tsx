@@ -2,7 +2,7 @@
 // 並ぶタブは src/constants/tabs.ts で決めています。
 // 選ばれているタブは黒の太字、それ以外は薄く表示します。
 
-import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, spacing, tabInactiveOpacity } from '../constants/theme';
 import { tabs } from '../constants/tabs';

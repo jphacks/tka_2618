@@ -17,7 +17,7 @@ async function persistNativePhoto(uri: string) {
   const directory = new Directory(Paths.document, 'visit-photos');
   directory.create({ idempotent: true, intermediates: true });
   const destination = new File(directory, `visit-${Date.now()}${fileExtension(uri)}`);
-  await new File(uri).copy(destination, { overwrite: true });
+  new File(uri).copy(destination);
   return destination.uri;
 }
 

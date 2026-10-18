@@ -32,6 +32,7 @@ export function ShopMapScreen() {
   const insets = useSafeAreaInsets();
   const [state, setState] = useState<SearchState>({ status: 'locating' });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [externalLinkError, setExternalLinkError] = useState('');
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -106,6 +107,7 @@ export function ShopMapScreen() {
 
   const retry = () => {
     setSelectedId(null);
+    setExternalLinkError('');
     setState({ status: 'locating' });
     setAttempt(value => value + 1);
   };
@@ -142,6 +144,18 @@ export function ShopMapScreen() {
     });
   };
 
+  const openHotPepper = async () => {
+    if (!selected?.detail_url) return;
+    setExternalLinkError('');
+    try {
+      const canOpen = await Linking.canOpenURL(selected.detail_url);
+      if (!canOpen) throw new Error('Unsupported URL');
+      await Linking.openURL(selected.detail_url);
+    } catch {
+      setExternalLinkError('ホットペッパーを開けませんでした。通信環境を確認して、もう一度お試しください。');
+    }
+  };
+
   return (
     <View style={styles.screen}>
       <Header title={region ? `${region.name}の郷土料理` : `${country.cuisineName}のお店`} showBack />
@@ -160,7 +174,10 @@ export function ShopMapScreen() {
           <RestaurantMap
             center={state.center}
             fullScreen
-            onSelect={restaurant => setSelectedId(restaurant.id)}
+            onSelect={restaurant => {
+              setExternalLinkError('');
+              setSelectedId(restaurant.id);
+            }}
             restaurants={state.restaurants}
             selectedId={selectedId}
           />
@@ -201,7 +218,10 @@ export function ShopMapScreen() {
                     accessibilityRole="button"
                     accessibilityLabel="店舗情報を閉じる"
                     hitSlop={spacing.sm}
-                    onPress={() => setSelectedId(null)}
+                    onPress={() => {
+                      setExternalLinkError('');
+                      setSelectedId(null);
+                    }}
                   >
                     <CloseIcon color={colors.text} />
                   </Pressable>
@@ -217,17 +237,20 @@ export function ShopMapScreen() {
                   ) : (
                     <>
                       <Text style={styles.reservationEmpty}>このお店の予約記録はありません</Text>
-                      <Button title="予約を記録する" onPress={openReservationForm} />
+                      <Button title="ホットペッパーで予約する" onPress={() => void openHotPepper()} disabled={!selected.detail_url} />
+                      {!selected.detail_url && <Text style={styles.linkError}>このお店の予約ページを取得できませんでした。</Text>}
+                      <Button title="予約済みとして記録する" variant="secondary" onPress={openReservationForm} />
                     </>
                   )}
                 </View>
-                {selected.detail_url && (
+                {externalLinkError && <Text accessibilityRole="alert" style={styles.linkError}>{externalLinkError}</Text>}
+                {selectedReservation && selected.detail_url && (
                   <Pressable
                     accessibilityRole="link"
-                    onPress={() => void Linking.openURL(selected.detail_url as string)}
+                    onPress={() => void openHotPepper()}
                     style={({ pressed }) => [styles.shopLink, pressed && styles.pressed]}
                   >
-                    <Text style={styles.shopLinkText}>店舗詳細を見る</Text>
+                    <Text style={styles.shopLinkText}>ホットペッパーで店舗詳細を見る</Text>
                     <ExternalLinkIcon color={colors.textSecondary} />
                   </Pressable>
                 )}
@@ -268,6 +291,7 @@ const styles = StyleSheet.create({
   reservedLabel: { ...fonts.bodyBold, color: colors.text },
   reservationDate: { ...fonts.body, color: colors.textSecondary },
   reservationEmpty: { ...fonts.body, color: colors.textSecondary },
+  linkError: { ...fonts.caption, color: '#b33030' },
   shopLink: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, marginTop: spacing.sm },
   shopLinkText: { ...fonts.bodyBold, color: colors.text },
   empty: { ...fonts.body, color: colors.text, textAlign: 'center', padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.background },

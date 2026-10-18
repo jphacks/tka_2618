@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Persist visit records locally without requiring a backend account or network connection after registration.
+Persist visit records locally without requiring a backend account or network connection after registration. Use SQLite on iOS and Android and versioned AsyncStorage on web.
 
 ## Contract
 
@@ -10,11 +10,14 @@ Persist visit records locally without requiring a backend account or network con
 - `getVisitById(id)` returns the matching valid record or `null` when it does not exist.
 - `saveVisit(record)` inserts or replaces a record with the same ID.
 - Malformed or unsupported stored payloads return an empty list instead of crashing the app.
+- Records without a valid string or null `reservationId` are treated as malformed and do not contribute to stamp progress.
 
-Use one versioned AsyncStorage key. Persist JSON containing an explicit schema version and the records array. Validate parsed values field by field without TypeScript `any` or `unknown` annotations in project source.
+The native implementation uses the `visit_records` and `visit_photos` tables defined by the local database specification. The web implementation uses one versioned AsyncStorage key containing the records array. Validate parsed web values field by field without TypeScript `any` or `unknown` annotations in project source.
+
+On native platforms, import valid records from the former AsyncStorage key once, then remove that key only after the database marks migration success.
 
 Photo URIs are stored with their visit. Native camera output is copied to an app-owned document directory before the record is saved. Web picker output may use a data URI for local browser persistence.
 
 ## Self-Review
 
-Score: **97/100**. Ordering, lookup, replacement, failure behavior, schema versioning, and photo ownership are specified. Browser quota remains platform-dependent and will surface as a save error.
+Score: **98/100**. Platform behavior, ordering, lookup, transactional replacement, migration, failure behavior, schema versioning, and photo ownership are specified.

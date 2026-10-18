@@ -23,11 +23,16 @@ export function CameraScreen() {
 
     const result = await captureVisitPhoto();
     if (result.status === 'captured') {
-      setPendingVisitPhoto({ reservationId: reservation.id, uri: result.uri });
-      router.replace({
-        pathname: '/reservations/confirm',
-        params: { reservationId: reservation.id },
-      });
+      try {
+        await setPendingVisitPhoto({ reservationId: reservation.id, uri: result.uri });
+        router.replace({
+          pathname: '/reservations/confirm',
+          params: { reservationId: reservation.id },
+        });
+      } catch {
+        setIsCapturing(false);
+        setMessage('撮影した写真を一時保存できませんでした。もう一度お試しください。');
+      }
       return;
     }
 
