@@ -46,7 +46,7 @@ export function CountrySelectScreen() {
               key={country.code}
               country={country}
               width={cardWidth}
-              onPress={item => router.push(`/shops/${item.code}`)}
+              onPress={item => router.push(item.code === 'JP' ? '/prefectures' : `/shops/${item.code}`)}
             />
           ))}
         </View>

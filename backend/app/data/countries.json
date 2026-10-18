@@ -1,0 +1,9 @@
+{
+  "default_country": "JP",
+  "settings": {
+    "JP": {
+      "supported": true,
+      "has_regions": true
+    }
+  }
+}

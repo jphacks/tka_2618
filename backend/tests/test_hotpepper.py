@@ -3,6 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.regional_cuisines import REGIONAL_CUISINES
 
 client = TestClient(app)
 
@@ -34,6 +35,87 @@ def test_search(monkeypatch):
     assert "test-secret" not in response.text
 
 
+def test_nearby_restaurants(monkeypatch):
+    monkeypatch.setenv("HOTPEPPER_API_KEY", "test-secret")
+
+    async def fake_get(self, url, *, params):
+        assert url.startswith("https://")
+        assert params == {
+            "key": "test-secret",
+            "keyword": "イタリアン",
+            "lat": 35.6812,
+            "lng": 139.7671,
+            "range": 5,
+            "order": 4,
+            "count": 30,
+            "start": 1,
+            "format": "json",
+        }
+        return httpx.Response(200, request=httpx.Request("GET", url), json={
+            "results": {
+                "results_available": 2,
+                "results_start": 1,
+                "shop": [
+                    {
+                        "id": "J001",
+                        "name": "近くのイタリアン",
+                        "address": "東京都千代田区",
+                        "lat": 35.682,
+                        "lng": 139.768,
+                        "genre": {"name": "イタリアン・フレンチ"},
+                        "photo": {"mobile": {"l": "https://example.com/photo.jpg"}},
+                        "urls": {"pc": "https://example.com/shop"},
+                    },
+                    {
+                        "id": "J002",
+                        "name": "範囲外の店舗",
+                        "lat": 35.7212,
+                        "lng": 139.7671,
+                    },
+                ],
+            }
+        })
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
+    response = client.get(
+        "/api/restaurants/nearby",
+        params={"country_code": "it", "lat": 35.6812, "lng": 139.7671},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["country_code"] == "IT"
+    assert payload["cuisine_name"] == "イタリア料理"
+    assert payload["radius_m"] == 3000
+    assert len(payload["restaurants"]) == 1
+    assert payload["restaurants"][0]["id"] == "J001"
+    assert payload["restaurants"][0]["distance_m"] < 200
+
+
+def test_nearby_restaurants_rejects_unsupported_cuisine(monkeypatch):
+    monkeypatch.setenv("HOTPEPPER_API_KEY", "test-secret")
+
+    response = client.get(
+        "/api/restaurants/nearby",
+        params={"country_code": "DE", "lat": 35.6812, "lng": 139.7671},
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "この国の料理検索にはまだ対応していません。"}
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"country_code": "IT", "lat": 91, "lng": 139},
+        {"country_code": "IT", "lat": 35, "lng": 181},
+        {"country_code": "ITA", "lat": 35, "lng": 139},
+    ],
+)
+def test_nearby_restaurants_validates_location(params):
+    assert client.get("/api/restaurants/nearby", params=params).status_code == 422
+
+
 @pytest.mark.parametrize("failure, status", [("timeout", 504), ("http", 502), ("api", 502), ("json", 502)])
 def test_upstream_failure(monkeypatch, failure, status):
     monkeypatch.setenv("HOTPEPPER_API_KEY", "test-secret")
@@ -52,3 +134,90 @@ def test_upstream_failure(monkeypatch, failure, status):
     response = client.get("/api/restaurants", params={"keyword": "新宿"})
     assert response.status_code == status
     assert "test-secret" not in response.text
+
+
+def test_prefecture_cuisine_search_keeps_current_location(monkeypatch):
+    """東京から沖縄を選んでも、沖縄県への地理的な絞り込みはしない。"""
+    monkeypatch.setenv("HOTPEPPER_API_KEY", "test-secret")
+    requested_keywords = []
+
+    async def fake_get(self, url, *, params):
+        requested_keywords.append(params["keyword"])
+        assert params["lat"] == 35.6812
+        assert params["lng"] == 139.7671
+        assert params["range"] == 5
+        assert "large_area" not in params
+        return httpx.Response(200, request=httpx.Request("GET", url), json={"results": {"shop": [
+            {"id": "near", "name": "近くの沖縄料理店", "lat": 35.682, "lng": 139.768},
+            {"id": "far", "name": "沖縄県のお店", "lat": 26.2124, "lng": 127.6809},
+        ]}})
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
+    response = client.get("/api/restaurants/nearby", params={
+        "country_code": "jp", "region_code": "jp-47", "lat": 35.6812, "lng": 139.7671,
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["region_code"] == "JP-47"
+    assert data["cuisine_name"] == "沖縄県の郷土料理"
+    assert requested_keywords == ["沖縄料理", "ゴーヤチャンプルー", "ソーキそば"]
+    assert data["search_keyword"] == "沖縄料理、ゴーヤチャンプルー、ソーキそば"
+    assert [item["id"] for item in data["restaurants"]] == ["near"]
+
+
+@pytest.mark.parametrize("country, region", [("IT", "JP-47"), ("JP", "JP-00"), ("JP", "JP-48"), ("JP", "XX-01")])
+def test_invalid_prefecture_does_not_call_upstream(monkeypatch, country, region):
+    async def unexpected_request(*args, **kwargs):
+        pytest.fail("Invalid selections must not reach the upstream service")
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", unexpected_request)
+    assert client.get("/api/restaurants/nearby", params={
+        "country_code": country, "region_code": region, "lat": 35, "lng": 139,
+    }).status_code == 422
+
+
+def test_all_prefectures_define_multiple_cuisine_keywords():
+    regions = client.get("/api/countries/JP/regions").json()["regions"]
+    assert len(regions) == 47
+    assert set(REGIONAL_CUISINES) == {region["code"] for region in regions}
+    assert all(2 <= len(keywords) <= 3 for keywords in REGIONAL_CUISINES.values())
+    assert REGIONAL_CUISINES["JP-01"] == ("北海道料理", "ジンギスカン", "スープカレー")
+    assert REGIONAL_CUISINES["JP-26"] == ("京料理", "おばんざい", "湯豆腐")
+
+
+def test_prefecture_search_combines_deduplicates_sorts_and_stops(monkeypatch):
+    monkeypatch.setenv("HOTPEPPER_API_KEY", "test-secret")
+    requested_keywords = []
+
+    async def fake_get(self, url, *, params):
+        requested_keywords.append(params["keyword"])
+        shops = {
+            "沖縄料理": [
+                {"id": "shared", "name": "沖縄料理店", "lat": 35.6820, "lng": 139.7671},
+            ],
+            "ゴーヤチャンプルー": [
+                {"id": "shared", "name": "重複店舗", "lat": 35.6820, "lng": 139.7671},
+                {"id": "nearest", "name": "一番近い店", "lat": 35.6813, "lng": 139.7671},
+            ],
+        }[params["keyword"]]
+        return httpx.Response(
+            200,
+            request=httpx.Request("GET", url),
+            json={"results": {"shop": shops}},
+        )
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
+    response = client.get("/api/restaurants/nearby", params={
+        "country_code": "JP",
+        "region_code": "JP-47",
+        "lat": 35.6812,
+        "lng": 139.7671,
+        "count": 2,
+    })
+
+    assert response.status_code == 200
+    data = response.json()
+    assert requested_keywords == ["沖縄料理", "ゴーヤチャンプルー"]
+    assert data["search_keyword"] == "沖縄料理、ゴーヤチャンプルー"
+    assert [restaurant["id"] for restaurant in data["restaurants"]] == ["nearest", "shared"]
+    assert data["restaurants"][1]["name"] == "沖縄料理店"

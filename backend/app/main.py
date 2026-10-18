@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.hotpepper import router as hotpepper_router
+from app.locations import router as locations_router
 
 app = FastAPI(title="JPHack API", version="0.1.0")
 cors_origins = [
@@ -21,6 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(hotpepper_router)
+app.include_router(locations_router)
 
 
 class HealthResponse(BaseModel):

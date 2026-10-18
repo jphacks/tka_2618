@@ -117,7 +117,8 @@ backend/
   tests/test_api.py    # API テスト
   requirements.txt    # Python の依存パッケージ
 mobile/
-  App.tsx              # React Nativeの画面
+  src/app/             # Expo Routerのタブ・画面ルート
+  src/screens/         # ホーム・地図（店舗検索）の画面
   app.json             # Expoの設定
   package.json         # モバイルアプリの依存関係
 compose.yaml           # 開発用 Docker Compose
@@ -200,10 +201,46 @@ Dockerを使わない場合は、起動するシェルに `HOTPEPPER_API_KEY` �
 店舗情報を表示する画面を作成する際は、[公式のご利用案内](https://webservice.recruit.co.jp/doc/hotpepper/guideline.html)に従ってクレジットを表示してください。
 検索項目・店舗データの詳細は[APIリファレンス](https://webservice.recruit.co.jp/doc/hotpepper/reference.html)を参照してください。
 
+### 国・都道府県API
+
+国一覧と、国に紐づく地域一覧を取得できます。日本の地域一覧はISO形式のコードを持つ47都道府県です。
+
+```bash
+# 国一覧
+curl http://localhost:8001/api/countries
+
+# 日本の都道府県一覧
+curl http://localhost:8001/api/countries/JP/regions
+```
+
+国一覧は国連加盟193か国を日本語名・英語名・ISO 3166国コード・国旗付きで返します。
+`supported` は現在サービスを提供できるか、`has_regions` は地域一覧を取得できるかを表します。現在の対応国は日本です。
+`cuisine_supported` が `true` の国は、現在地周辺の料理検索に対応しています。
+
+### 現在地周辺の料理検索
+
+対応する国の料理を、指定した緯度・経度から3km以内で検索します。ホットペッパーAPIの `range=5` を使用し、返された店舗を実距離で再確認して距離順に返します。
+
+```bash
+curl --get 'http://localhost:8001/api/restaurants/nearby' \
+  --data 'country_code=IT' \
+  --data 'lat=35.6812' \
+  --data 'lng=139.7671' \
+  --data 'count=30'
+```
+
+現在は日本、韓国、中国、タイ、ベトナム、インド、イタリア、フランス、スペイン、メキシコ、トルコ、アメリカの料理検索に対応しています。
+利用にはリポジトリ直下の `.env` に `HOTPEPPER_API_KEY` の設定が必要です。
+
 ## アプリ（React Native / Expo）
 
 `mobile/` の同じコードからiOS・Android・Web版を起動できます。
-バックエンド接続確認・再接続画面を備え、Python APIを使用します。
+ホーム画面の国一覧はバックエンドから取得し、国カードから対応する都道府県選択または店舗検索画面へ移動できます。
+国を押すと次の画面で、端末の現在地から3km以内にある対応料理の店舗を地図と距離順の一覧で表示します。
+日本を選ぶと47都道府県の一覧へ進み、選んだ地域の料理を現在地の近くで検索します（その都道府県内のお店を探す機能ではありません）。
+`/api/restaurants/nearby` は任意の `region_code=JP-47` などを受け付けます。都道府県選択時は「沖縄料理」「ゴーヤチャンプルー」「ソーキそば」などを順番に検索し、店舗IDで重複を除いて距離順に返します。料理名が店舗の掲載情報に含まれない場合は、対象店を取得できないことがあります。
+画面は `/map` → `/map/prefectures`（日本のみ）→ `/map/results?country=JP&region=JP-47` と遷移します。
+Web版の地図にはOpenStreetMap、iOS・Android版には端末のネイティブ地図を使用します。
 ホットペッパーのAPIキーは引き続きバックエンドだけで管理します。
 
 ### スマートフォンで起動
@@ -300,7 +337,9 @@ npm run lint
 npx expo export --platform ios --platform android --platform web
 ```
 
-- `mobile/App.tsx`: モバイル画面とAPI接続処理
+- `mobile/src/app/`: ホーム・地図・予約・設定のタブルーティング
+- `mobile/src/screens/MapScreen.tsx`: 国選択・現在地検索・店舗一覧
+- `mobile/src/components/ApiStatus.tsx`: 設定タブのAPI接続確認
 - `mobile/app.json`: アプリ名・プラットフォーム設定
 - `mobile/.env.example`: API接続先の設定例
 

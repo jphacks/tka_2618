@@ -1,4 +1,4 @@
-// 地図タブ：食べた国が塗られる世界地図・日本地図
-import { MapScreen } from '../../screens/MapScreen';
+// 地図タブ：訪問した国・都道府県を塗るスタンプ地図
+import { StampMapScreen } from '../../screens/StampMapScreen';
 
-export default MapScreen;
+export default StampMapScreen;

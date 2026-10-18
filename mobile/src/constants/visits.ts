@@ -1,0 +1,4 @@
+export const MAX_VISIT_PHOTOS = 5;
+export const MAX_VISIT_MEMO_LENGTH = 500;
+export const MAX_VISIT_DISTANCE_METERS = 300;
+export const MAX_LOCATION_ACCURACY_METERS = 100;

@@ -46,7 +46,9 @@ export type Shop = {
 // 予約したお店
 export type Reservation = {
   id: string;
+  shopId?: string;
   countryCode: CountryCode;
+  prefectureCode?: string;
   shopName: string;
   dateTime: string; // 例: '2026-10-18T19:00'
   info?: string; // 例: '新宿駅 徒歩3分・ディナー 2,000〜3,000円'
