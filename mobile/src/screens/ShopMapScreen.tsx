@@ -141,7 +141,7 @@ export function ShopMapScreen() {
         ...(selected.image_url ? { imageUrl: selected.image_url } : {}),
         ...(info ? { info } : {}),
       },
-    });
+    }, { withAnchor: true });
   };
 
   const openHotPepper = async () => {

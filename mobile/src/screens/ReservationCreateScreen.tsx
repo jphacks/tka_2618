@@ -78,10 +78,12 @@ export function ReservationCreateScreen() {
         info: params.info,
         imageUrl: params.imageUrl ?? country.imageUrl,
       });
-      router.back();
+      // どのタブから開いても、保存した予約が見える予約一覧へ戻る。
+      router.dismissTo('/reservations');
     } catch {
-      setIsSaving(false);
       setSaveError('予約を保存できませんでした。もう一度お試しください。');
+    } finally {
+      setIsSaving(false);
     }
   };
 
