@@ -25,6 +25,17 @@ Do not persist, log, or place device latitude or longitude in navigation paramet
 
 The map remains visible behind the selected restaurant overlay. The overlay may scroll vertically on a short screen and must leave device safe-area space below its actions.
 
+## Marker Motion
+
+- On web, hovering or keyboard-focusing an unselected restaurant marker enlarges it to 1.2 times its base size over 160 milliseconds and strengthens its shadow. The marker tip remains anchored to the same geographic coordinate and the marker rises above nearby markers.
+- Moving the pointer away or removing focus restores the marker over 140 milliseconds.
+- A selected marker remains black and larger than its normal state. Hovering or focusing it uses a smaller additional scale so it does not obscure nearby markers.
+- Hover and focus only provide visual feedback. They do not select the restaurant or open its detail card; the existing click action does that.
+- On iOS and Android, where hover is unavailable, tapping a marker animates it to 1.15 times its base size while selecting it. Closing the detail card restores the marker.
+- Do not recenter or zoom the map as part of marker motion.
+- If the operating system requests reduced motion, apply the selected or hover scale immediately without an animated transition.
+- Custom native markers track child-view changes only while their selection animation is running.
+
 ## Reservation Status
 
 - Match a reservation by restaurant ID when both values have an ID. For older or manually entered reservations without a restaurant ID, match the same cuisine country and the restaurant name after trimming whitespace and converting it to lowercase.
@@ -46,4 +57,4 @@ The map remains visible behind the selected restaurant overlay. The overlay may 
 
 ## Self-Review
 
-Score: **99/100**. Route validation, permission timing, accuracy, API parameters, full-screen layout, marker interaction, external reservation handoff, local recording boundary, failure handling, safe-area behavior, and privacy are explicit.
+Score: **99/100**. Route validation, permission timing, accuracy, API parameters, full-screen layout, pointer, keyboard and touch marker motion, reduced-motion behavior, external reservation handoff, local recording boundary, failure handling, safe-area behavior, and privacy are explicit.

@@ -60,6 +60,7 @@ export default function RestaurantMap({ center, restaurants, selectedId, onSelec
             icon={restaurant.id === selectedId ? selectedRestaurantIcon : restaurantIcon}
             key={restaurant.id}
             position={[restaurant.lat, restaurant.lng]}
+            riseOnHover
           >
             <Popup>
               <strong>{restaurant.name}</strong>
