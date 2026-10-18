@@ -72,8 +72,8 @@ Use Expo Router's existing absolute routes.
 |---|---|
 | `近くのお店を探す` | `/search` |
 | `国名から選ぶ` arrow | `/search` |
-| Japan card (`JP`) | `/search/prefectures` |
-| Any other supported country card | `/search/results?country=<uppercase ISO code>` |
+| Japan card (`JP`) | `/prefectures` |
+| Any other supported country card | `/shops/<uppercase ISO code>` |
 | `今まで訪れたお店` arrow | `/map` |
 | Visited-shop card | `/visits/<visit ID>` |
 

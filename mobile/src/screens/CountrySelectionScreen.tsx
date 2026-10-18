@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Header } from '../components/Header';
 import { colors, spacing } from '../constants/theme';
 import { searchApi, type Prefecture, type SearchCountry } from '../data/searchApi';
 import {
@@ -21,7 +22,13 @@ const areas = [
   { name: '九州・沖縄', min: 40, max: 47 },
 ];
 
-export function CountrySelectionScreen({ prefectures = false }: { prefectures?: boolean }) {
+export function CountrySelectionScreen({
+  prefectures = false,
+  flow = 'search',
+}: {
+  prefectures?: boolean;
+  flow?: 'search' | 'home';
+}) {
   const [items, setItems] = useState<(Prefecture & { flag?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -77,7 +84,8 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
 
   return (
     <SafeAreaView edges={[]} style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      {flow === 'home' && <Header title="都道府県から選ぶ" showBack />}
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Text style={styles.eyebrow}>{prefectures ? 'JAPANESE LOCAL FOOD' : 'WORLD FOOD NEARBY'}</Text>
         <Text accessibilityRole="header" style={styles.title}>{prefectures ? 'どこの郷土料理を食べる？' : '近くの世界料理を探す'}</Text>
         <Text style={styles.intro}>{prefectures
@@ -98,11 +106,16 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
               {section.items.map(item => (
                 <Pressable key={item.code} accessibilityRole="button" accessibilityLabel={item.name_ja}
                   onPress={() => {
-                    if (!prefectures && item.code === 'JP') router.push('/search/prefectures');
-                    else router.push({ pathname: '/search/results', params: {
-                      country: prefectures ? 'JP' : item.code,
-                      ...(prefectures ? { region: item.code } : {}),
-                    } });
+                    if (flow === 'home' && prefectures) {
+                      router.push(`/shops/JP?regionCode=${encodeURIComponent(item.code)}`);
+                    } else if (!prefectures && item.code === 'JP') {
+                      router.push('/search/prefectures');
+                    } else {
+                      router.push({ pathname: '/search/results', params: {
+                        country: prefectures ? 'JP' : item.code,
+                        ...(prefectures ? { region: item.code } : {}),
+                      } });
+                    }
                   }}
                   style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
                   {item.flag && <Text style={styles.flag}>{item.flag}</Text>}
@@ -119,6 +132,7 @@ export function CountrySelectionScreen({ prefectures = false }: { prefectures?: 
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  scroll: { flex: 1 },
   content: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: spacing.screen, gap: spacing.lg },
   eyebrow: { fontSize: 12, letterSpacing: 2, color: '#666' },
   title: { fontSize: 28, fontWeight: '700', color: colors.text },

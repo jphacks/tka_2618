@@ -38,6 +38,7 @@ export function getNearbyRestaurants(
   countryCode: CountryCode,
   center: { latitude: number; longitude: number },
   signal: AbortSignal,
+  regionCode?: string,
 ) {
   const query = new URLSearchParams({
     country_code: countryCode,
@@ -45,6 +46,7 @@ export function getNearbyRestaurants(
     lng: String(center.longitude),
     count: '30',
   });
+  if (regionCode) query.set('region_code', regionCode);
   return searchApi<NearbySearchResult>(`/api/restaurants/nearby?${query}`, signal);
 }
 

@@ -2,13 +2,13 @@
 
 ## Route and Input
 
-Route: `/shops/[countryCode]`. `countryCode` must match one of the supported cuisine countries shown on the home or country-selection screen. An unsupported value displays `国が見つかりませんでした` without requesting location.
+Route: `/shops/[countryCode]`. `countryCode` must match one of the supported cuisine countries shown on the home or country-selection screen. Japan additionally requires `regionCode` with a valid `JP-01` through `JP-47` prefecture code. An unsupported country displays `国が見つかりませんでした`; Japan without a valid prefecture displays `都道府県を選んでください` and a `都道府県を選ぶ` action. Neither state requests location.
 
 ## Location and Search Flow
 
 1. On screen entry, display `現在地を取得しています…` and request foreground location permission.
 2. If granted, obtain one current position using `Location.Accuracy.Balanced`.
-3. Display `近くのお店を検索しています…` and call `/api/restaurants/nearby` with the selected uppercase country code, current latitude, current longitude, and `count=30`.
+3. Display `近くのお店を検索しています…` and call `/api/restaurants/nearby` with the selected uppercase country code, current latitude, current longitude, `count=30`, and the selected `region_code` for Japan.
 4. Display the current position, the 3-kilometre search radius, and returned restaurants on the existing cross-platform restaurant map.
 5. Do not select a restaurant initially. Selecting a map marker opens that restaurant's detail card over the bottom of the map.
 

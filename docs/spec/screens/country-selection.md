@@ -18,6 +18,7 @@ Select a supported cuisine-origin country or a Japanese prefecture before nearby
 - Japan opens `/search/prefectures`.
 - Other supported countries open `/search/results?country=<code>`.
 - A prefecture opens `/search/results?country=JP&region=<code>`.
+- In the current home-tab flow, Japan opens `/prefectures`, and a prefecture opens `/shops/JP?regionCode=<code>`.
 - `旅のスタンプ地図を見る` replaces the route with `/map`.
 
 ## Self-Review

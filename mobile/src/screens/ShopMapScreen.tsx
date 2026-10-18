@@ -24,8 +24,10 @@ type SearchState =
   | { status: 'error'; message: string };
 
 export function ShopMapScreen() {
-  const { countryCode } = useLocalSearchParams<{ countryCode: string }>();
+  const { countryCode, regionCode } = useLocalSearchParams<{ countryCode: string; regionCode?: string }>();
   const country = findCountry(countryCode);
+  const region = country?.code === 'JP' ? japanMapShapes.find(item => item.code === regionCode) : undefined;
+  const requiresRegionSelection = country?.code === 'JP' && !region;
   const { reservations } = useAppData();
   const insets = useSafeAreaInsets();
   const [state, setState] = useState<SearchState>({ status: 'locating' });
@@ -33,7 +35,7 @@ export function ShopMapScreen() {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (!country) return;
+    if (!country || requiresRegionSelection) return;
     const selectedCountry = country;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), SEARCH_TIMEOUT_MS);
@@ -58,7 +60,7 @@ export function ShopMapScreen() {
         if (!active) return;
         const center = { latitude: location.coords.latitude, longitude: location.coords.longitude };
         setState({ status: 'searching' });
-        const result = await getNearbyRestaurants(selectedCountry.code, center, controller.signal);
+        const result = await getNearbyRestaurants(selectedCountry.code, center, controller.signal, region?.code);
         if (!active) return;
         setSelectedId(null);
         setState({ status: 'success', center, restaurants: result.restaurants });
@@ -79,13 +81,25 @@ export function ShopMapScreen() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [attempt, country]);
+  }, [attempt, country, region, requiresRegionSelection]);
 
   if (!country) {
     return (
       <View style={styles.screen}>
         <Header title="お店を探す" showBack />
         <Text style={styles.notFound}>国が見つかりませんでした</Text>
+      </View>
+    );
+  }
+
+  if (requiresRegionSelection) {
+    return (
+      <View style={styles.screen}>
+        <Header title="日本のお店" showBack />
+        <View style={styles.centered}>
+          <Text style={styles.notFound}>都道府県を選んでください</Text>
+          <Button title="都道府県を選ぶ" onPress={() => router.replace('/prefectures')} />
+        </View>
       </View>
     );
   }
@@ -113,7 +127,7 @@ export function ShopMapScreen() {
     if (!selected) return;
     const info = [selected.genre, selected.address].filter(value => value !== null).join('・');
     const prefectureCode = country.code === 'JP'
-      ? japanMapShapes.find(prefecture => selected.address?.includes(prefecture.name))?.code
+      ? region?.code ?? japanMapShapes.find(prefecture => selected.address?.includes(prefecture.name))?.code
       : undefined;
     router.push({
       pathname: '/reservations/new',
@@ -130,7 +144,7 @@ export function ShopMapScreen() {
 
   return (
     <View style={styles.screen}>
-      <Header title={`${country.cuisineName}のお店`} showBack />
+      <Header title={region ? `${region.name}の郷土料理` : `${country.cuisineName}のお店`} showBack />
       {state.status === 'locating' || state.status === 'searching' ? (
         <View style={styles.centered}>
           <ActivityIndicator accessibilityLabel={state.status === 'locating' ? '現在地を取得中' : '近くのお店を検索中'} color={colors.primary} />

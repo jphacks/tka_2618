@@ -66,7 +66,11 @@ export function HomeScreen() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.countryList}
         renderItem={({ item }) => (
-          <CountryCard country={item} width={COUNTRY_CARD_WIDTH} onPress={country => router.push(`/shops/${country.code}`)} />
+          <CountryCard
+            country={item}
+            width={COUNTRY_CARD_WIDTH}
+            onPress={country => router.push(country.code === 'JP' ? '/prefectures' : `/shops/${country.code}`)}
+          />
         )}
       />
 
