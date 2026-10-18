@@ -94,8 +94,6 @@ export function PhotoConfirmScreen() {
         <Text style={styles.notFound}>予約が見つかりませんでした</Text>
       ) : !photoUri ? (
         <View style={styles.missingPhoto}>
-          <Text style={styles.missingTitle}>写真を確認できませんでした</Text>
-          <Text style={styles.missingDescription}>撮影途中でアプリが閉じられたか、写真の保存が完了しなかった可能性があります。</Text>
           <Button
             title={isCapturing ? '起動しています…' : '写真を撮り直す'}
             variant="secondary"
@@ -155,16 +153,6 @@ const styles = StyleSheet.create({
   missingPhoto: {
     padding: spacing.screen,
     gap: spacing.lg,
-  },
-  missingTitle: {
-    ...fonts.sectionTitle,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  missingDescription: {
-    ...fonts.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
   },
   loading: {
     alignItems: 'center',

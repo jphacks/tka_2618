@@ -10,7 +10,7 @@ Route: `/reservations/confirm?reservationId={id}`.
 
 The reservation must exist and the persisted pending visit photo must have the same `reservationId`. While local storage is loading, display `写真を読み込んでいます…`. If the reservation is missing, display `予約が見つかりませんでした`.
 
-If the matching photo is still missing after storage loading completes, display a recovery state with `写真を確認できませんでした`, an explanation that capture may have been interrupted, `写真を撮り直す`, and `予約一覧に戻る`.
+If the matching photo is still missing after storage loading completes, display a recovery state with only the `写真を撮り直す` and `予約一覧に戻る` buttons (no title or explanatory message).
 
 ## Layout
 
