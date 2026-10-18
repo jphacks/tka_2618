@@ -9,6 +9,7 @@ import { japanMapShapes } from '../data/japanMapShapes';
 import { japanMapViewBox, worldMapShapes, worldMapViewBox, type MapShape } from '../data/mapShapes';
 import { searchApi, type Prefecture, type SearchCountry } from '../data/searchApi';
 import type { VisitRecord } from '../data/visitTypes';
+import { getCachedCountries, saveCountries } from '../repositories/locationCatalogRepository';
 import { listVisits } from '../repositories/visitRepository';
 
 type MapMode = 'world' | 'japan';
@@ -17,6 +18,9 @@ export function StampMapScreen() {
   const [mode, setMode] = useState<MapMode>('world');
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [names, setNames] = useState<ReadonlyMap<string, string>>(new Map());
+  const [targetCountryCodes, setTargetCountryCodes] = useState<ReadonlySet<string>>(
+    new Set(worldMapShapes.map(shape => shape.code)),
+  );
   const [selected, setSelected] = useState<MapShape | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,16 +38,28 @@ export function StampMapScreen() {
         if (!active) return;
         setVisits(storedVisits);
         setLoading(false);
+
+        const cachedCountries = await getCachedCountries().catch(() => null);
+        if (active && cachedCountries) {
+          setTargetCountryCodes(new Set(cachedCountries.map(country => country.code)));
+          setNames(current => new Map([
+            ...current,
+            ...cachedCountries.map(country => [country.code, country.name_ja] as const),
+          ]));
+        }
+
         try {
           const [countries, prefectures] = await Promise.all([
             searchApi<{ countries: SearchCountry[] }>('/api/countries', controller.signal),
             searchApi<{ regions: Prefecture[] }>('/api/countries/JP/regions', controller.signal),
           ]);
           if (active) {
+            setTargetCountryCodes(new Set(countries.countries.map(country => country.code)));
             setNames(new Map([
               ...countries.countries.map(country => [country.code, country.name_ja] as const),
               ...prefectures.regions.map(prefecture => [prefecture.code, prefecture.name_ja] as const),
             ]));
+            void saveCountries(countries.countries).catch(() => undefined);
           }
         } catch {
           // 地図と訪問記録はオフラインでも表示し、地域名だけSVGの名称へフォールバックする。
@@ -80,6 +96,13 @@ export function StampMapScreen() {
   const viewBox = mode === 'world' ? worldMapViewBox : japanMapViewBox;
   const counts = mode === 'world' ? worldCounts : japanCounts;
   const visitedRegions = shapes.filter(shape => (counts.get(shape.code) ?? 0) > 0);
+  const progressLabel = mode === 'world' ? '訪問国数' : '訪問都道府県数';
+  const progressCurrent = mode === 'world'
+    ? visitedRegions.filter(shape => targetCountryCodes.has(shape.code)).length
+    : visitedRegions.length;
+  const progressTotal = mode === 'world'
+    ? worldMapShapes.filter(shape => targetCountryCodes.has(shape.code)).length
+    : japanMapShapes.length;
   const selectedVisits = selected ? stampVisits.filter(visit => mode === 'world'
     ? visit.countryCode === selected.code
     : visit.countryCode === 'JP' && visit.prefectureCode === selected.code) : [];
@@ -115,7 +138,17 @@ export function StampMapScreen() {
               <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.unvisitedSwatch]} /><Text style={styles.legendText}>まだ未訪問</Text></View>
               <View style={styles.legendItem}><View style={[styles.legendSwatch, styles.selectedSwatch]} /><Text style={styles.legendText}>選択中</Text></View>
             </View>
-            <Text style={styles.progress}>{visitedRegions.length}地域を訪問済み</Text>
+            <View
+              accessible
+              accessibilityLabel={`${progressLabel} ${progressCurrent} / ${progressTotal}`}
+              style={styles.progressCard}
+            >
+              <Text style={styles.progressLabel}>{progressLabel}</Text>
+              <View style={styles.progressNumbers}>
+                <Text style={styles.progressCurrent}>{progressCurrent}</Text>
+                <Text style={styles.progressTotal}> / {progressTotal}</Text>
+              </View>
+            </View>
             {selected && (
               <View style={styles.selectedCard}>
                 <Text style={styles.selectedName}>{selectedName}</Text>
@@ -165,7 +198,11 @@ const styles = StyleSheet.create({
   segmentActive: { backgroundColor: '#111' },
   segmentText: { color: '#52605c', fontWeight: '700' },
   segmentTextActive: { color: '#fff' },
-  progress: { color: '#52605c', textAlign: 'center', fontWeight: '600' },
+  progressCard: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, backgroundColor: '#edf0ee', borderRadius: radius.sm },
+  progressLabel: { color: '#52605c', fontSize: 14, fontWeight: '700' },
+  progressNumbers: { flexDirection: 'row', alignItems: 'baseline' },
+  progressCurrent: { color: colors.text, fontSize: 28, fontWeight: '800' },
+  progressTotal: { color: '#52605c', fontSize: 16, fontWeight: '700' },
   legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 14 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendSwatch: { width: 14, height: 14, borderWidth: 1 },
