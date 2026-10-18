@@ -20,7 +20,7 @@ Do not persist, log, or place device latitude or longitude in navigation paramet
 - A current-location map that fills all space below the header
 - A compact result count, privacy note, and `現在地を再取得` action over the top of the map
 - No restaurant card until the user selects a marker
-- A dismissible bottom overlay containing the selected restaurant name, distance, genre, address, image, external detail link, and reservation status when each value is available
+- A dismissible bottom overlay containing the selected restaurant name, distance, genre, address, image, Hot Pepper action, and reservation status when each value is available
 - `3km以内に該当するお店が見つかりませんでした。` when the result is empty
 
 The map remains visible behind the selected restaurant overlay. The overlay may scroll vertically on a short screen and must leave device safe-area space below its actions.
@@ -29,8 +29,11 @@ The map remains visible behind the selected restaurant overlay. The overlay may 
 
 - Match a reservation by restaurant ID when both values have an ID. For older or manually entered reservations without a restaurant ID, match the same cuisine country and the restaurant name after trimming whitespace and converting it to lowercase.
 - When a match exists, display `予約済み`, its formatted reservation date and time, and a `予約内容を確認` secondary button that opens `/reservations`.
-- When no match exists, display `このお店の予約記録はありません` and a `予約を記録する` primary button.
-- `予約を記録する` opens `/reservations/new` with the selected restaurant ID, name, country code, image URL, a prefecture code inferred from a matching Japanese prefecture name in the address when available, and a human-readable information string made from available genre and address values.
+- When no match exists, display `このお店の予約記録はありません`, a `ホットペッパーで予約する` primary button, and a `予約済みとして記録する` secondary button.
+- `ホットペッパーで予約する` opens the selected restaurant's Hot Pepper `detail_url` in the device's external browser. If `detail_url` is missing, disable the button and display `このお店の予約ページを取得できませんでした。`.
+- If opening the external URL fails, remain on the map and display `ホットペッパーを開けませんでした。通信環境を確認して、もう一度お試しください。`.
+- `予約済みとして記録する` opens `/reservations/new` with the selected restaurant ID, name, country code, image URL, a prefecture code inferred from a matching Japanese prefecture name in the address when available, and a human-readable information string made from available genre and address values.
+- The app does not claim that the external reservation succeeded. The user explicitly records the reservation after completing it on Hot Pepper.
 - Reservation status is derived from app-wide reservation state and must update when this screen is revisited after saving or deleting a reservation.
 
 ## Error and Retry
@@ -43,4 +46,4 @@ The map remains visible behind the selected restaurant overlay. The overlay may 
 
 ## Self-Review
 
-Score: **99/100**. Route validation, permission timing, accuracy, API parameters, full-screen layout, initial selection, marker interaction, overlay contents, retry, cancellation, safe-area behavior, and privacy are explicit.
+Score: **99/100**. Route validation, permission timing, accuracy, API parameters, full-screen layout, marker interaction, external reservation handoff, local recording boundary, failure handling, safe-area behavior, and privacy are explicit.
